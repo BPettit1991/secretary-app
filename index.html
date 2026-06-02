@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SECRETARY // J.A.R.V.I.S</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#020608;--bg2:#050d12;--bg3:#071018;--bg4:#0a1520;--bg5:#0d1c2a;
+  --cyan:#00d4ff;--cyan2:#00aacc;--cyan3:rgba(0,212,255,0.15);--cyan4:rgba(0,212,255,0.06);
+  --red:#ff3b30;--red2:rgba(255,59,48,0.12);
+  --gold:#ffd04a;--gold2:rgba(255,208,74,0.10);
+  --green:#00ff88;--green2:rgba(0,255,136,0.10);
+  --amber:#ff9500;--amber2:rgba(255,149,0,0.10);
+  --purple:#bf5fff;--purple2:rgba(191,95,255,0.10);
+  --t1:#e0f4ff;--t2:#5a9ab5;--t3:#2a5060;--t4:#16303d;
+  --b1:rgba(0,212,255,0.10);--b2:rgba(0,212,255,0.20);--b3:rgba(0,212,255,0.35);
+}
+html,body,#root{height:100%;width:100%}
+body{
+  font-family:'Share Tech Mono',monospace;background:var(--bg);color:var(--t1);
+  font-size:12px;line-height:1.5;overflow:hidden;
+  background-image:linear-gradient(rgba(0,212,255,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.022) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.02) 2px,rgba(0,0,0,0.02) 4px)}
+.raj{font-family:'Rajdhani',sans-serif!important}
+.shell{display:flex;height:100vh;width:100vw;overflow:hidden}
+
+/* TICKER */
+.ticker{height:24px;background:rgba(2,6,8,0.95);border-bottom:1px solid var(--b1);display:flex;align-items:center;overflow:hidden;flex-shrink:0}
+.ticker-inner{display:flex;animation:tick 40s linear infinite;white-space:nowrap}
+@keyframes tick{0%{transform:translateX(60vw)}100%{transform:translateX(-200%)}}
+.ti{padding:0 24px;font-size:8.5px;letter-spacing:0.1em;color:var(--t3);border-right:1px solid var(--b1)}
+.ti span{color:var(--cyan2)}
+
+/* SIDEBAR */
+.sidebar{width:232px;flex-shrink:0;background:linear-gradient(180deg,var(--bg2),var(--bg));border-right:1px solid var(--b1);display:flex;flex-direction:column;position:relative;overflow:hidden}
+.sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:220px;background:radial-gradient(ellipse at 50% -10%,rgba(0,212,255,0.09),transparent 70%);pointer-events:none}
+
+/* ARC REACTOR */
+.reactor-wrap{padding:18px 16px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:14px}
+.reactor{position:relative;width:40px;height:40px;flex-shrink:0}
+.r-ring{position:absolute;border-radius:50%;border:1px solid;animation:spin linear infinite}
+.r1{inset:0;border-color:rgba(0,212,255,0.5);animation-duration:8s}
+.r2{inset:5px;border-color:rgba(0,212,255,0.3);animation-duration:5s;animation-direction:reverse}
+.r3{inset:10px;border-color:rgba(0,212,255,0.2);animation-duration:3s}
+.r-core{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle,var(--cyan),var(--cyan2));box-shadow:0 0 14px var(--cyan),0 0 28px rgba(0,212,255,0.3)}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.brand-text .bname{font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:0.15em;text-transform:uppercase}
+.brand-text .bsub{font-size:8.5px;color:var(--t3);letter-spacing:0.08em;margin-top:1px}
+.bstatus{padding:0 16px 12px;display:flex;align-items:center;gap:6px;font-size:8.5px;color:var(--cyan2);letter-spacing:0.08em;border-bottom:1px solid var(--b1)}
+.bpulse{width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--cyan)}50%{opacity:0.3;box-shadow:0 0 2px var(--cyan)}}
+
+.nav{padding:8px 6px;flex:1}
+.nitem{display:flex;align-items:center;gap:9px;padding:8px 10px;cursor:pointer;color:var(--t3);font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.15s;border:none;background:none;width:100%;text-align:left;margin-bottom:2px;position:relative;clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,0 100%)}
+.nitem:hover{color:var(--t2);background:var(--cyan4)}
+.nitem.on{color:var(--cyan);background:var(--cyan4);border-left:2px solid var(--cyan);text-shadow:0 0 8px rgba(0,212,255,0.35)}
+.nic{width:15px;text-align:center;font-size:12px;flex-shrink:0}
+.nbadge{margin-left:auto;background:var(--amber2);color:var(--amber);border:1px solid rgba(255,149,0,0.3);font-size:8.5px;font-weight:700;padding:1px 6px;letter-spacing:0.04em}
+.nbadge-r{margin-left:auto;background:var(--red2);color:var(--red);border:1px solid rgba(255,59,48,0.3);font-size:8.5px;font-weight:700;padding:1px 6px;letter-spacing:0.04em}
+
+.machines{padding:10px 14px 6px;border-top:1px solid var(--b1)}
+.mlabel{font-size:8px;font-weight:700;letter-spacing:0.18em;color:var(--t3);margin-bottom:8px;text-transform:uppercase}
+.mrow{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.mdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.don{background:var(--green);box-shadow:0 0 7px var(--green)}
+.dwarn{background:var(--amber);box-shadow:0 0 7px var(--amber)}
+.doff{background:var(--t4)}
+.mname{font-size:10px;color:var(--t2);flex:1;letter-spacing:0.05em}
+.mst{font-size:8.5px;letter-spacing:0.04em}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;background:var(--bg);display:flex;flex-direction:column}
+.main::-webkit-scrollbar{width:3px}
+.main::-webkit-scrollbar-thumb{background:var(--b2)}
+.main-inner{flex:1;overflow-y:auto}
+.main-inner::-webkit-scrollbar{width:3px}
+.main-inner::-webkit-scrollbar-thumb{background:var(--b2)}
+
+/* PANEL */
+.panel{background:var(--bg2);border:1px solid var(--b1);position:relative;overflow:hidden;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.35),transparent);pointer-events:none}
+.pp{padding:14px 16px}
+.ph{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.phl{font-size:8px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;flex-shrink:0}
+.phl-c{color:var(--cyan2)}.phl-r{color:var(--red)}.phl-g{color:var(--green)}.phl-a{color:var(--amber)}.phl-p{color:var(--purple)}.phl-gold{color:var(--gold)}
+.ph-line{flex:1;height:1px;background:linear-gradient(90deg,var(--b1),transparent)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;font-size:8px;font-weight:700;border:1px solid;letter-spacing:0.08em;text-transform:uppercase;clip-path:polygon(0 0,calc(100% - 3px) 0,100% 3px,100% 100%,3px 100%,0 calc(100% - 3px))}
+.bok{background:var(--green2);color:var(--green);border-color:rgba(0,255,136,0.3)}
+.bwarn{background:var(--amber2);color:var(--amber);border-color:rgba(255,149,0,0.3)}
+.boff{background:var(--bg4);color:var(--t3);border-color:var(--b1)}
+.berr{background:var(--red2);color:var(--red);border-color:rgba(255,59,48,0.3)}
+.bpur{background:var(--purple2);color:var(--purple);border-color:rgba(191,95,255,0.3)}
+.bgold{background:var(--gold2);color:var(--gold);border-color:rgba(255,208,74,0.3)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;border:none;padding:7px 14px;clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px))}
+.btn:active{transform:scale(0.97)}
+.bp{background:rgba(0,212,255,0.12);color:var(--cyan);border:1px solid var(--b2);box-shadow:0 0 12px rgba(0,212,255,0.1)}
+.bp:hover{background:rgba(0,212,255,0.2);box-shadow:0 0 20px rgba(0,212,255,0.25);text-shadow:0 0 8px var(--cyan)}
+.bg{background:var(--bg3);border:1px solid var(--b1);color:var(--t2)}
+.bg:hover{border-color:var(--b2);color:var(--t1)}
+.bt{background:var(--bg3);border:1px solid var(--b1);color:var(--t2);font-size:8px;padding:5px 9px}
+.bt:hover{border-color:var(--b2);color:var(--cyan)}
+.btn-done{background:var(--green2);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-size:8px;padding:5px 9px}
+.btn-done:hover{background:rgba(0,255,136,0.18)}
+
+.sbar{height:2px;background:var(--bg5);margin-top:4px;position:relative}
+.sfill{height:100%;position:absolute;left:0;top:0}
+.sfok{background:linear-gradient(90deg,var(--green),rgba(0,255,136,0.2));box-shadow:0 0 4px var(--green)}
+.sfwarn{background:linear-gradient(90deg,var(--amber),rgba(255,149,0,0.2));box-shadow:0 0 4px var(--amber)}
+.sferr{background:linear-gradient(90deg,var(--red),rgba(255,59,48,0.2));box-shadow:0 0 4px var(--red)}
+
+/* ═══ TOAST NOTIFICATIONS ═══ */
+.toast-stack{position:fixed;top:32px;right:16px;z-index:99999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{
+  display:flex;align-items:flex-start;gap:9px;padding:10px 13px;min-width:260px;max-width:320px;
+  background:var(--bg2);border:1px solid var(--b2);
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+  animation:toast-in 0.2s ease-out;
+  pointer-events:all;
+  position:relative;overflow:hidden;
+}
+.toast::after{content:'';position:absolute;bottom:0;left:0;height:2px;background:var(--toast-col,var(--cyan));animation:toast-progress var(--toast-dur,4s) linear forwards}
+@keyframes toast-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toast-progress{from{width:100%}to{width:0%}}
+.toast-icon{font-size:12px;flex-shrink:0;margin-top:1px}
+.toast-body{flex:1}
+.toast-title{font-size:10px;color:var(--t1);letter-spacing:0.04em;margin-bottom:2px}
+.toast-msg{font-size:8.5px;color:var(--t3);letter-spacing:0.03em;line-height:1.4}
+.toast-close{font-size:9px;color:var(--t3);cursor:pointer;flex-shrink:0;padding:0 2px;line-height:1}
+.toast-close:hover{color:var(--t1)}
+.toast-out{animation:toast-out 0.18s ease-in forwards}
+@keyframes toast-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
+
+/* ═══ JARVIS COMMAND INTERFACE ═══ */
+.jarvis-shell{display:flex;flex-direction:column;height:100%;padding:0}
+
+/* Top HUD bar */
+.hud-bar{
+  display:flex;align-items:center;gap:20px;padding:10px 24px;
+  border-bottom:1px solid var(--b1);
+  background:linear-gradient(90deg,rgba(0,212,255,0.04),transparent);
+  flex-shrink:0;
+}
+.hud-stat{text-align:center;flex-shrink:0}
+.hud-num{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;line-height:1;color:var(--cyan);text-shadow:0 0 12px rgba(0,212,255,0.5)}
+.hud-lbl{font-size:7.5px;color:var(--t3);letter-spacing:0.12em;text-transform:uppercase;margin-top:1px}
+.hud-div{width:1px;height:36px;background:var(--b1);flex-shrink:0}
+.hud-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:16px}
+.hud-ring{position:relative;width:50px;height:50px}
+.hr-outer{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(0,212,255,0.3);animation:spin 10s linear infinite}
+.hr-inner{position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(0,212,255,0.2);animation:spin 6s linear infinite reverse}
+.hr-core{position:absolute;inset:16px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.4),rgba(0,212,255,0.1));box-shadow:0 0 10px rgba(0,212,255,0.4)}
+
+/* Conversation area */
+.convo{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:12px}
+.convo::-webkit-scrollbar{width:3px}
+.convo::-webkit-scrollbar-thumb{background:var(--b1)}
+
+.msg-user{display:flex;justify-content:flex-end;gap:10px;align-items:flex-start}
+.msg-jarvis{display:flex;justify-content:flex-start;gap:10px;align-items:flex-start}
+
+.msg-avatar-user{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(0,212,255,0.2),rgba(0,212,255,0.05));
+  border:1px solid var(--b2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--cyan);letter-spacing:0.05em;font-weight:700;
+}
+.msg-avatar-j{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle,rgba(0,212,255,0.25),rgba(0,212,255,0.05));
+  border:1px solid rgba(0,212,255,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--cyan);
+  box-shadow:0 0 10px rgba(0,212,255,0.2);
+  position:relative;
+}
+.msg-avatar-j::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1px solid rgba(0,212,255,0.15);animation:spin 8s linear infinite}
+
+.bubble-user{
+  background:rgba(0,212,255,0.08);border:1px solid var(--b2);
+  padding:9px 13px;max-width:60%;
+  font-size:11px;color:var(--t1);letter-spacing:0.03em;line-height:1.5;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);
+}
+.bubble-jarvis{
+  background:var(--bg2);border:1px solid var(--b1);
+  padding:9px 13px;max-width:75%;
+  font-size:11px;color:var(--t2);letter-spacing:0.03em;line-height:1.6;
+  clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px);
+  position:relative;overflow:hidden;
+}
+.bubble-jarvis::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--cyan2),transparent);opacity:0.3}
+.bubble-jarvis strong{color:var(--cyan);font-weight:400}
+.bubble-jarvis .action-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.action-row{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--bg3);border:1px solid rgba(0,212,255,0.07);font-size:10px}
+.action-row .aico{color:var(--green);font-size:10px}
+.action-row .adone{color:var(--green);font-size:9px;margin-left:auto}
+.action-row .apend{color:var(--amber);font-size:9px;margin-left:auto}
+.msg-time{font-size:8px;color:var(--t3);letter-spacing:0.06em;margin-top:3px;text-align:right}
+.msg-time-l{text-align:left}
+
+/* Thinking indicator */
+.thinking{display:flex;gap:4px;align-items:center;padding:4px 0}
+.thdot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:think 1.2s ease-in-out infinite}
+.thdot:nth-child(2){animation-delay:0.2s}
+.thdot:nth-child(3){animation-delay:0.4s}
+@keyframes think{0%,100%{opacity:0.2;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2);box-shadow:0 0 6px var(--cyan)}}
+
+/* Quick commands */
+.qcmds{padding:8px 24px;display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--b1);background:var(--bg);flex-shrink:0}
+.qcmd{padding:5px 11px;border:1px solid var(--b1);background:var(--bg2);color:var(--t3);font-size:9px;letter-spacing:0.07em;text-transform:uppercase;cursor:pointer;transition:all 0.13s;font-family:'Share Tech Mono',monospace;clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,0 100%)}
+.qcmd:hover{border-color:var(--b2);color:var(--cyan);background:var(--cyan4)}
+
+/* Command input */
+.cmd-bar{
+  padding:12px 24px 14px;border-top:1px solid var(--b2);
+  background:linear-gradient(0deg,rgba(0,212,255,0.04),transparent);
+  flex-shrink:0;
+}
+.cmd-input-row{display:flex;align-items:center;gap:10px}
+.cmd-prompt{font-size:12px;color:var(--cyan);letter-spacing:0.05em;flex-shrink:0;text-shadow:0 0 8px rgba(0,212,255,0.5)}
+.cmd-input{
+  flex:1;background:transparent;border:none;outline:none;
+  font-size:13px;color:var(--t1);font-family:'Share Tech Mono',monospace;
+  letter-spacing:0.04em;caret-color:var(--cyan);
+}
+.cmd-input::placeholder{color:var(--t3)}
+.cmd-line{height:1px;background:linear-gradient(90deg,var(--b2),transparent);margin-top:8px}
+.cmd-hints{display:flex;gap:16px;margin-top:6px}
+.cmd-hint{font-size:8px;color:var(--t3);letter-spacing:0.08em}
+.cmd-hint span{color:var(--t2)}
+
+/* ── SIDE PANELS overlay when on desk ── */
+.desk-layout{display:grid;grid-template-columns:1fr 260px;gap:0;height:100%}
+.desk-side{border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+.side-panel{border-bottom:1px solid var(--b1);flex-shrink:0}
+.side-scroll{flex:1;overflow-y:auto}
+.side-scroll::-webkit-scrollbar{width:2px}
+.side-scroll::-webkit-scrollbar-thumb{background:var(--b1)}
+
+.drow{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,212,255,0.04);gap:8px;cursor:pointer;transition:all 0.1s}
+.drow:last-child{border-bottom:none}
+.drow:hover{background:var(--cyan4);margin:0 -4px;padding-left:4px;padding-right:4px}
+.fname{font-size:10.5px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0.02em;flex:1}
+.fmeta{font-size:8.5px;color:var(--t3);letter-spacing:0.04em;white-space:nowrap}
+
+.feed-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,212,255,0.04)}
+.feed-item:last-child{border-bottom:none}
+.feed-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.feed-txt{font-size:9.5px;color:var(--t2);flex:1;line-height:1.4;letter-spacing:0.02em}
+.feed-time{font-size:8px;color:var(--t3);white-space:nowrap}
+
+/* Stats row */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px;border-bottom:1px solid var(--b1)}
+.stat-tile{text-align:center}
+.stat-num{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;line-height:1}
+.stat-lbl{font-size:7.5px;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase}
+
+/* ── BRIEFING ── */
+.b-shell{padding:22px 26px;height:100%;display:flex;flex-direction:column;gap:14px}
+.greeting{font-family:'Rajdhani',sans-serif;font-size:46px;font-weight:700;letter-spacing:-1px;line-height:1;color:var(--t1)}
+.g-name{color:transparent;background:linear-gradient(90deg,var(--cyan),#80e8ff);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 16px rgba(0,212,255,0.4))}
+.g-sub{font-size:8.5px;color:var(--t3);letter-spacing:0.15em;margin-top:5px;text-transform:uppercase}
+.b-grid{display:grid;grid-template-columns:1fr 290px;grid-template-rows:auto auto;gap:12px;flex:1;min-height:0}
+.b-cal{grid-column:1;grid-row:1}
+.b-attn{grid-column:2;grid-row:1/3}
+.b-focus{grid-column:1;grid-row:2}
+.cal-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid rgba(0,212,255,0.06)}
+.cal-row:last-child{border-bottom:none}
+.cal-time{width:44px;flex-shrink:0;font-size:10px;color:var(--cyan2)}
+.cal-bar{width:2px;height:22px;background:linear-gradient(180deg,var(--cyan),transparent);flex-shrink:0;margin-right:12px;box-shadow:0 0 5px var(--cyan)}
+.cal-title{flex:1;font-size:12px;color:var(--t1);font-family:'Rajdhani',sans-serif;font-weight:500}
+.cal-loc{font-size:8.5px;color:var(--t3);text-transform:uppercase;letter-spacing:0.05em}
+.attn-item{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid rgba(0,212,255,0.06)}
+.attn-item:last-child{border-bottom:none}
+.aicon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;border:1px solid}
+.ai-w{color:var(--amber);border-color:rgba(255,149,0,0.3);background:var(--amber2)}
+.ai-ok{color:var(--green);border-color:rgba(0,255,136,0.25);background:var(--green2)}
+.atxt{flex:1;font-size:10px;color:var(--t2);letter-spacing:0.03em}
+.aact{font-size:8px;color:var(--t3);cursor:pointer;transition:color 0.12s;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap}
+.aact:hover{color:var(--cyan)}
+.focus-card{background:linear-gradient(135deg,rgba(0,212,255,0.07),var(--bg2));border-color:rgba(0,212,255,0.18)}
+.focus-label{font-size:8px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:6px}
+.focus-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.focus-meta{font-size:9px;color:var(--t3);margin-bottom:12px;letter-spacing:0.05em;text-transform:uppercase}
+
+/* ── INBOX ── */
+.ib-shell{padding:22px 26px;max-width:700px}
+.tri{background:var(--bg2);border:1px solid var(--b1);padding:14px 16px;margin-bottom:9px;position:relative;overflow:hidden;transition:border-color 0.15s;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
+.tri::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.3),transparent);pointer-events:none}
+.tri:hover{border-color:var(--b2)}
+.tri-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}
+.tri-name{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.tri-sub{font-size:9px;color:var(--t3);letter-spacing:0.05em;text-transform:uppercase}
+.cb{background:var(--bg);border:1px solid rgba(0,212,255,0.07);padding:8px 12px;margin-bottom:10px}
+.crow{display:flex;align-items:center;gap:9px;padding:4px 0}
+.cdot{width:7px;height:7px;flex-shrink:0}
+.cpath{flex:1;font-size:10.5px;color:var(--t2)}
+.ctime{font-size:9px;color:var(--t3);letter-spacing:0.04em}
+.tacts{display:flex;gap:7px;flex-wrap:wrap}
+
+/* ── FILE MAP ── */
+.fm-shell{padding:22px 26px}
+.fm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.fcrd{background:var(--bg2);border:1px solid var(--b1);padding:13px;cursor:pointer;transition:all 0.16s;position:relative;overflow:hidden;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.fcrd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.2),transparent)}
+.fcrd:hover{border-color:var(--b2);transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,0.5)}
+.fh{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.fpip{width:7px;height:7px;flex-shrink:0}
+.fn2{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;color:var(--t1);letter-spacing:0.04em}
+.fs{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:2px;letter-spacing:0.04em}
+.ft{font-size:8.5px;color:var(--t3);border-top:1px solid rgba(0,212,255,0.07);margin-top:8px;padding-top:7px}
+.ss{background:var(--bg2);border:1px solid var(--b1);padding:13px 18px;position:relative;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.ss::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.2),transparent)}
+.srbow{display:flex;height:4px;gap:2px;margin:9px 0 11px}
+.slgnd{display:flex;gap:14px;flex-wrap:wrap}
+.slg{display:flex;align-items:center;gap:5px;font-size:8.5px;color:var(--t3);letter-spacing:0.06em;text-transform:uppercase}
+.spip{width:7px;height:7px}
+
+/* ── AUTOMATIONS ── */
+.au-shell{padding:22px 26px}
+.au-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.arow{background:var(--bg2);border:1px solid var(--b1);padding:10px 13px;display:flex;align-items:center;gap:10px;margin-bottom:5px;transition:all 0.12s;position:relative;overflow:hidden;clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px))}
+.arow::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.12),transparent)}
+.arow:hover{border-color:var(--b2);background:var(--bg3)}
+.an{font-family:'Rajdhani',sans-serif;font-size:12px;color:var(--t1);margin-bottom:1px;font-weight:500;letter-spacing:0.03em}
+.am{font-size:8.5px;color:var(--t3);letter-spacing:0.04em}
+.amw{font-size:8.5px;color:var(--amber);letter-spacing:0.04em}
+
+/* ── TASKS ── */
+.tk-shell{padding:22px 26px;height:100%;display:flex;flex-direction:column;gap:0;overflow:hidden}
+.tk-header{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-shrink:0}
+.tk-body{flex:1;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-content:start}
+.tk-body::-webkit-scrollbar{width:3px}
+.tk-body::-webkit-scrollbar-thumb{background:var(--b1)}
+.tk-col-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--b1)}
+.tk-col-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase}
+.tk-col-count{font-size:8px;color:var(--t3);letter-spacing:0.1em;margin-left:auto}
+.tk-card{background:var(--bg2);border:1px solid var(--b1);padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:all 0.12s;position:relative;overflow:hidden;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.tk-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.15),transparent)}
+.tk-card:hover{border-color:var(--b2);background:var(--bg3)}
+.tk-card.done{opacity:0.38}
+.tk-card.done .tk-title{text-decoration:line-through;color:var(--t3)}
+.tk-title{font-size:11px;color:var(--t1);margin-bottom:5px;letter-spacing:0.02em;line-height:1.35}
+.tk-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.tk-ctx{font-size:8px;letter-spacing:0.08em;text-transform:uppercase;padding:1px 6px;border:1px solid;clip-path:polygon(0 0,calc(100% - 3px) 0,100% 3px,100% 100%,3px 100%,0 calc(100% - 3px))}
+.tk-ctx-c{color:var(--cyan);border-color:rgba(0,212,255,0.25);background:var(--cyan4)}
+.tk-ctx-d{color:var(--purple);border-color:rgba(191,95,255,0.25);background:var(--purple2)}
+.tk-ctx-p{color:var(--gold);border-color:rgba(255,208,74,0.25);background:var(--gold2)}
+.tk-pri{font-size:8px;color:var(--t3);letter-spacing:0.06em}
+.tk-pri-h{color:var(--red)}
+.tk-pri-m{color:var(--amber)}
+.tk-due{font-size:8px;letter-spacing:0.04em;margin-left:auto;white-space:nowrap}
+.tk-due-soon{color:var(--red)}
+.tk-due-ok{color:var(--t3)}
+.tk-actions{display:flex;gap:6px;margin-top:9px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+function Dot({c}){return <span className={`mdot ${c}`}/>}
+function Bdg({type='ok',children}){return <span className={`badge b${type}`}>{children}</span>}
+function PH({label,col='c'}){return(<div className="ph"><span className={`phl phl-${col}`}>{label}</span><span className="ph-line"/></div>)}
+function Panel({children,className='',style={}}){return <div className={`panel ${className}`} style={style}>{children}</div>}
+
+function Clock(){
+  const [t,setT]=useState(new Date());
+  useEffect(()=>{const i=setInterval(()=>setT(new Date()),1000);return()=>clearInterval(i)},[]);
+  return <>{t.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</>;
+}
+
+const TICKER_ITEMS=[
+  {l:'NODE STATUS',v:'3/3 · 2 ONLINE'},
+  {l:'ONEDRIVE',v:'524 GB / 1 TB'},
+  {l:'INBOX',v:'7 ITEMS PENDING'},
+  {l:'SYNC',v:'CURRENT 07:42'},
+  {l:'BLACKBETTY',v:'75 GB FREE · OFFLOAD QUEUED'},
+  {l:'NEXT EVENT',v:'COMPLIHAUS STANDUP 09:00'},
+  {l:'FOCUS',v:'COMPLIHAUS ONBOARDING DOC'},
+  {l:'TASKS DUE',v:'1 FRI · 1 MON'},
+  {l:'AUTOMATIONS',v:'34 ACTIVE · 2 FLAGS'},
+  {l:'RC COMPLIANCE',v:'ISO DOCS CURRENT'},
+];
+
+const PRESET_CONVOS={
+  'show inbox':{
+    response:`Pulling up your Inbox now, sir.\n\n<strong>7 items requiring attention:</strong>\n\nHigh priority — 2 version conflicts detected overnight. The most critical is <strong>budget-final-FINAL-v3.xlsx</strong> — the copy on MAIN-LAP is 11 days newer than OneDrive. I'd recommend keeping the local version.\n\nAlso flagged — a Word document rescued from %TEMP% this morning. It would have auto-deleted in 4 hours. I've held it for your review.\n\nShall I open the Inbox view?`,
+    actions:[
+      {ico:'✓',txt:'budget-final-FINAL-v3.xlsx — conflict flagged',done:true},
+      {ico:'✓',txt:'Untitled(1).docx — rescued from %TEMP%',done:true},
+      {ico:'⏳',txt:'5 additional items awaiting review',done:false},
+    ]
+  },
+  'find rc doc':{
+    response:`Scanning all nodes and OneDrive for RC documents...\n\nFound <strong>114 files</strong> in the rc\\ directory across your system:\n\n— <strong>rc\\live\\</strong> has 12 active documents (all current, ISO compliant)\n— <strong>rc\\drafts\\</strong> has 8 in-progress documents\n— <strong>rc\\archive\\</strong> has 94 archived versions\n\nMost recently modified: <strong>RC-ISO9001-checklist.xlsx</strong> on OneDrive, 3 days ago.\n\nWould you like me to open it, or filter by a specific document type?`,
+    actions:[
+      {ico:'✓',txt:'rc\\live\\ — 12 docs scanned',done:true},
+      {ico:'✓',txt:'RC-ISO9001-checklist.xlsx located — OneDrive',done:true},
+    ]
+  },
+  'sync all nodes':{
+    response:`Initiating full sync across all online nodes...\n\n<strong>MAIN-LAP</strong> → OneDrive: 3 files queued (budget-2026-q2.xlsx, complihaus-onboarding-v4.docx, invoice-may-2026.pdf)\n\n<strong>BLACKBETTY</strong> → OneDrive: 1 file queued (sprinto-evidence-pack.zip)\n\n<strong>TERTIARY</strong> is currently offline. I'll queue its sync for when it comes back online and notify you.\n\nEstimated completion: <strong>4 minutes.</strong> I'll alert you when done.`,
+    actions:[
+      {ico:'↑',txt:'MAIN-LAP → OneDrive: 3 files uploading',done:false},
+      {ico:'↑',txt:'BLACKBETTY → OneDrive: 1 file uploading',done:false},
+      {ico:'⏸',txt:'TERTIARY: offline — sync queued',done:false},
+    ]
+  },
+  'end of day':{
+    response:`Running end-of-day summary for Monday 02 June 2026...\n\n<strong>What got done:</strong> 5 tasks completed, 47 files synced, 3 conflicts resolved, 2 documents rescued from temp.\n\n<strong>Outstanding:</strong> Complihaus onboarding doc is due Friday — you haven't touched it today. RC Sprinto evidence upload is due Monday.\n\n<strong>Storage:</strong> BLACKBETTY is critically low. I've queued an auto-offload of 12 GB of archive files to OneDrive overnight.\n\n<strong>Tomorrow:</strong> No calendar events before 10am. Good window to work on the onboarding doc first thing.`,
+    actions:[
+      {ico:'✓',txt:'5 tasks completed today',done:true},
+      {ico:'✓',txt:'Obsidian daily note updated',done:true},
+      {ico:'⏳',txt:'BLACKBETTY offload: queued for tonight',done:false},
+    ]
+  },
+  'where is the budget':{
+    response:`Found <strong>budget-2026-q2.xlsx</strong> — it exists in 2 locations:\n\n1. <strong>MAIN-LAP</strong> at C:\\Users\\benja\\complihaus\\finance\\budget-2026-q2.xlsx\n   Last modified: 1 week ago · 2.4 MB\n\n2. <strong>OneDrive</strong> — same version, last synced 1 week ago\n\nNo conflicts detected. Both copies are identical.\n\nWould you like me to open it?`,
+    actions:[
+      {ico:'✓',txt:'budget-2026-q2.xlsx located — MAIN-LAP + OneDrive',done:true},
+      {ico:'✓',txt:'No version conflicts detected',done:true},
+    ]
+  },
+  'run security scan':{
+    response:`Running full security scan across all nodes...\n\n<strong>2 issues found:</strong>\n\n⚠ <strong>.env scanner flagged 2 files</strong> with credentials outside secure locations:\n— C:\\Users\\benja\\complihaus\\integrations\\.env.local — contains SHOPIFY_API_KEY\n— C:\\Users\\benja\\dayjob\\scripts\\.env — contains DB_PASSWORD\n\nRecommendation: move both to a secrets manager or add to .gitignore immediately.\n\n<strong>No other issues.</strong> No API keys in plaintext docs, no sensitive files on BLACKBETTY unencrypted, no unusual file access patterns overnight.`,
+    actions:[
+      {ico:'⚠',txt:'.env.local — SHOPIFY_API_KEY exposed',done:false},
+      {ico:'⚠',txt:'dayjob .env — DB_PASSWORD exposed',done:false},
+      {ico:'✓',txt:'110 other files — clean',done:true},
+    ]
+  },
+  'storage report':{
+    response:`Storage report as of 07:42 today:\n\n<strong>MAIN-LAP</strong> — 380 GB used / 930 GB · Healthy\nLargest consumers: personal\\media\\ (48 GB), dayjob\\ (1.1 GB), complihaus\\ (2.3 GB)\n\n<strong>BLACKBETTY</strong> — 162 GB used / 237 GB · <strong>⚠ 75 GB free — critically low</strong>\n12 GB offload queued for tonight → moving archive files to OneDrive\n\n<strong>TERTIARY</strong> — 104.5 GB used / 118 GB · Offline (last seen 3 days ago)\n\n<strong>OneDrive</strong> — 524 GB used / 1 TB · 476 GB free\n\nRecommendation: once the BLACKBETTY offload completes tonight you'll have ~87 GB free. Consider clearing Downloads on TERTIARY next time it's online.`,
+    actions:[
+      {ico:'⚠',txt:'BLACKBETTY: offload queued — 12 GB tonight',done:false},
+      {ico:'✓',txt:'MAIN-LAP: healthy',done:true},
+      {ico:'✓',txt:'OneDrive: 476 GB free',done:true},
+    ]
+  },
+  'check automations':{
+    response:`Automation status as of now:\n\n<strong>34 automations active.</strong> 2 require your attention:\n\n⚠ <strong>Overdue alert</strong> — 3 tasks are past due and have been escalated to HIGH: "RC annual review prep", "Sprinto evidence upload", and "Day job Q2 wrap-up".\n\n⚠ <strong>.env scanner</strong> — 2 credential files flagged in non-secure locations (run security scan for details).\n\nEverything else is running clean. Notion sync is live, Obsidian daily note was created at 06:00, Shopify digest delivered at 08:00, Vercel deploy watcher is active.`,
+    actions:[
+      {ico:'⚠',txt:'3 tasks escalated to HIGH priority',done:false},
+      {ico:'⚠',txt:'.env scanner: 2 flags',done:false},
+      {ico:'✓',txt:'32 other automations — running clean',done:true},
+    ]
+  },
+};
+
+const QUICK_CMDS=[
+  'show inbox',
+  'find rc doc',
+  'sync all nodes',
+  'end of day',
+  'where is the budget',
+  'run security scan',
+  'check automations',
+  'storage report',
+];
+
+// ── TOAST SYSTEM ──
+let _toastId=0;
+function useToasts(){
+  const [toasts,setToasts]=useState([]);
+  const add=useCallback((title,msg,type='info',dur=4000)=>{
+    const id=++_toastId;
+    setToasts(t=>[...t,{id,title,msg,type,dur,out:false}]);
+    setTimeout(()=>setToasts(t=>t.map(x=>x.id===id?{...x,out:true}:x)),dur-200);
+    setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),dur+200);
+    return id;
+  },[]);
+  const dismiss=useCallback((id)=>{
+    setToasts(t=>t.map(x=>x.id===id?{...x,out:true}:x));
+    setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),200);
+  },[]);
+  return{toasts,add,dismiss};
+}
+
+const TOAST_ICONS={info:'◈',success:'✓',warning:'⚠',error:'✕'};
+const TOAST_COLS={info:'var(--cyan)',success:'var(--green)',warning:'var(--amber)',error:'var(--red)'};
+
+function ToastStack({toasts,dismiss}){
+  return(
+    <div className="toast-stack">
+      {toasts.map(({id,title,msg,type,dur,out})=>(
+        <div key={id} className={`toast${out?' toast-out':''}`}
+          style={{'--toast-col':TOAST_COLS[type],'--toast-dur':`${dur}ms`}}>
+          <div className="toast-icon" style={{color:TOAST_COLS[type]}}>{TOAST_ICONS[type]}</div>
+          <div className="toast-body">
+            <div className="toast-title">{title}</div>
+            {msg&&<div className="toast-msg">{msg}</div>}
+          </div>
+          <div className="toast-close" onClick={()=>dismiss(id)}>✕</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TypeWriter({text,onDone}){
+  const [shown,setShown]=useState('');
+  const [done,setDone]=useState(false);
+  useEffect(()=>{
+    setShown('');setDone(false);
+    let i=0;
+    const raw=text.replace(/<[^>]+>/g,'');
+    const speed=raw.length>300?10:16;
+    const interval=setInterval(()=>{
+      i++;
+      setShown(text.slice(0,i));
+      if(i>=text.length){clearInterval(interval);setDone(true);if(onDone)onDone()}
+    },speed);
+    return()=>clearInterval(interval);
+  },[text]);
+  return <span dangerouslySetInnerHTML={{__html:shown+(done?'':'▋')}}/>;
+}
+
+function JarvisDesk({go,notify}){
+  const [input,setInput]=useState('');
+  const [messages,setMessages]=useState([
+    {role:'j',text:`Good morning. All systems are online.\n\nI've prepared your morning briefing — <strong>3 items need your attention</strong> before 09:00: a version conflict in your budget file, a rescued temp document, and BLACKBETTY's storage is critically low.\n\nI've queued an auto-offload for tonight. What would you like to work on, sir?`,time:'07:42',typing:true},
+  ]);
+  const [thinking,setThinking]=useState(false);
+  const convoRef=useRef(null);
+
+  const scrollBottom=()=>{if(convoRef.current)convoRef.current.scrollTop=convoRef.current.scrollHeight};
+  useEffect(scrollBottom,[messages,thinking]);
+
+  const send=(cmd)=>{
+    const q=(cmd||input).trim();
+    if(!q)return;
+    setInput('');
+    const userMsg={role:'u',text:q,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})};
+    setMessages(m=>[...m,userMsg]);
+    setThinking(true);
+    const key=Object.keys(PRESET_CONVOS).find(k=>q.toLowerCase().includes(k));
+    const delay=700+Math.random()*500;
+    setTimeout(()=>{
+      setThinking(false);
+      const resp=key?PRESET_CONVOS[key]:{
+        response:`Understood. Processing "${q}"...\n\nI don't have a preset response for that query, but in the full system I'd scan all nodes, query Notion, check Google Calendar, and surface the most relevant result within seconds.\n\nTry one of the quick commands below, sir.`,
+        actions:[]
+      };
+      setMessages(m=>[...m,{role:'j',text:resp.response,actions:resp.actions,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true}]);
+      if(key==='run security scan')notify('Security scan complete','2 credential files flagged — action required','warning');
+      else if(key==='sync all nodes')notify('Sync initiated','4 files queuing across 2 nodes','info');
+      else if(key==='storage report')notify('BLACKBETTY critical','75 GB remaining — offload queued for tonight','warning');
+      else if(key==='check automations')notify('2 automations flagged','Overdue tasks + .env scanner need attention','warning');
+    },delay);
+  };
+
+  return(
+    <div style={{display:'grid',gridTemplateColumns:'1fr 252px',height:'100%',overflow:'hidden'}}>
+      <div className="jarvis-shell" style={{borderRight:'1px solid var(--b1)'}}>
+        <div className="hud-bar">
+          {[
+            {n:'47',l:'Files Synced',col:'var(--cyan)'},
+            {n:'7',l:'Inbox Items',col:'var(--amber)'},
+            {n:'5',l:'Tasks Done',col:'var(--green)'},
+            {n:'3',l:'Conflicts',col:'var(--red)'},
+          ].map(({n,l,col},i)=>(
+            <React.Fragment key={l}>
+              {i>0&&<div className="hud-div"/>}
+              <div className="hud-stat">
+                <div className="hud-num" style={{color:col,textShadow:`0 0 10px ${col}`}}>{n}</div>
+                <div className="hud-lbl">{l}</div>
+              </div>
+            </React.Fragment>
+          ))}
+          <div className="hud-div"/>
+          <div className="hud-mid">
+            <div className="hud-ring">
+              <div className="hr-outer"/><div className="hr-inner"/><div className="hr-core"/>
+            </div>
+            <div style={{textAlign:'center'}}>
+              <div style={{fontFamily:'Rajdhani',fontSize:15,fontWeight:700,color:'var(--cyan)',letterSpacing:'0.1em'}}>J.A.R.V.I.S</div>
+              <div style={{fontSize:8,color:'var(--t3)',letterSpacing:'0.12em'}}>SECRETARY SYSTEM · ONLINE</div>
+            </div>
+          </div>
+          <div className="hud-div"/>
+          <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.06em',textAlign:'right'}}>
+            <div style={{color:'var(--cyan2)',fontSize:14,fontFamily:'Rajdhani',fontWeight:600}}><Clock/></div>
+            <div>MONDAY 02 JUN</div>
+          </div>
+        </div>
+
+        <div className="convo" ref={convoRef}>
+          {messages.map((m,i)=>(
+            <div key={i}>
+              {m.role==='u'?(
+                <div className="msg-user">
+                  <div>
+                    <div className="bubble-user">{m.text}</div>
+                    <div className="msg-time">{m.time}</div>
+                  </div>
+                  <div className="msg-avatar-user">BJ</div>
+                </div>
+              ):(
+                <div className="msg-jarvis">
+                  <div className="msg-avatar-j">S</div>
+                  <div>
+                    <div className="bubble-jarvis">
+                      {m.typing?<TypeWriter text={m.text}/>:<span dangerouslySetInnerHTML={{__html:m.text}}/>}
+                      {m.actions&&m.actions.length>0&&(
+                        <div className="action-list">
+                          {m.actions.map(({ico,txt,done},ai)=>(
+                            <div key={ai} className="action-row">
+                              <span className="aico">{ico}</span>
+                              <span style={{fontSize:10,color:'var(--t2)',flex:1}}>{txt}</span>
+                              {done?<span className="adone">DONE</span>:<span className="apend">IN PROGRESS</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="msg-time msg-time-l">{m.time} · SECRETARY</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {thinking&&(
+            <div className="msg-jarvis">
+              <div className="msg-avatar-j">S</div>
+              <div className="bubble-jarvis">
+                <div className="thinking"><div className="thdot"/><div className="thdot"/><div className="thdot"/></div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="qcmds">
+          {QUICK_CMDS.map(c=>(
+            <button key={c} className="qcmd" onClick={()=>send(c)}>{c}</button>
+          ))}
+        </div>
+
+        <div className="cmd-bar">
+          <div className="cmd-input-row">
+            <span className="cmd-prompt">›_</span>
+            <input
+              className="cmd-input"
+              value={input}
+              onChange={e=>setInput(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&send()}
+              placeholder="Give me an order..."
+              autoFocus
+            />
+            <button className="btn bp" style={{padding:'6px 14px',fontSize:9}} onClick={()=>send()}>SEND</button>
+          </div>
+          <div className="cmd-line"/>
+          <div className="cmd-hints">
+            <div className="cmd-hint"><span>ENTER</span> to send</div>
+            <div className="cmd-hint"><span>QUICK CMDS</span> above</div>
+            <div className="cmd-hint"><span>34</span> automations running</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="desk-side">
+        <div className="side-panel pp" style={{borderBottom:'1px solid var(--b1)'}}>
+          <PH label="// Live Feed" col="g"/>
+          {[
+            {col:'var(--green)',tx:'RC-ISO9001-checklist.xlsx synced',t:'2m'},
+            {col:'var(--cyan)',tx:'budget-2026-q2.xlsx opened on MAIN-LAP',t:'8m'},
+            {col:'var(--amber)',tx:'TEMP RESCUE: Untitled(1).docx',t:'14m'},
+            {col:'var(--red)',tx:'Conflict: budget-final.xlsx',t:'21m'},
+            {col:'var(--green)',tx:'3 tasks completed',t:'38m'},
+            {col:'var(--purple)',tx:'Standup reminder queued',t:'45m'},
+          ].map(({col,tx,t},i)=>(
+            <div key={i} className="feed-item">
+              <div className="feed-dot" style={{background:col,boxShadow:`0 0 4px ${col}`}}/>
+              <div className="feed-txt">{tx}</div>
+              <div className="feed-time">{t}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="stat-row">
+          {[
+            {n:'75',l:'GB Free',col:'var(--amber)'},
+            {n:'34',l:'Automations',col:'var(--cyan)'},
+            {n:'2',l:'Flags',col:'var(--red)'},
+          ].map(({n,l,col})=>(
+            <div key={l} className="stat-tile">
+              <div className="stat-num" style={{color:col,textShadow:`0 0 8px ${col}`}}>{n}</div>
+              <div className="stat-lbl">{l}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="side-scroll pp">
+          <PH label="// Recent Files" col="gold"/>
+          {[
+            ['complihaus-onboarding-v4.docx','MAIN-LAP · 2D'],
+            ['RC-ISO9001-checklist.xlsx','ONEDRIVE · 3D'],
+            ['invoice-may-2026.pdf','BLACKBETTY · 5D'],
+            ['sprinto-evidence-pack.zip','ONEDRIVE · 1W'],
+            ['budget-2026-q2.xlsx','MAIN-LAP · 1W'],
+          ].map(([n,m])=>(
+            <div key={n} className="drow">
+              <div className="fname">{n}</div>
+              <div className="fmeta">{m}</div>
+            </div>
+          ))}
+
+          <div style={{marginTop:12}}><PH label="// Upcoming" col="a"/></div>
+          {[
+            {t:'Complihaus onboarding doc',d:'FRI 06 JUN',days:'4D',col:'var(--red)'},
+            {t:'RC Sprinto upload',d:'MON 09 JUN',days:'7D',col:'var(--amber)'},
+            {t:'RC annual review',d:'MON 16 JUN',days:'14D',col:'var(--cyan)'},
+          ].map(({t,d,days,col})=>(
+            <div key={t} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'1px solid rgba(0,212,255,0.05)'}}>
+              <div style={{fontFamily:'Rajdhani',fontSize:16,fontWeight:700,color:col,textShadow:`0 0 8px ${col}`,width:30,textAlign:'center'}}>{days}</div>
+              <div>
+                <div style={{fontSize:10,color:'var(--t1)',letterSpacing:'0.02em'}}>{t}</div>
+                <div style={{fontSize:8.5,color:'var(--t3)',letterSpacing:'0.06em'}}>{d}</div>
+              </div>
+            </div>
+          ))}
+
+          <div style={{marginTop:12}}><PH label="// Node Status"/></div>
+          {[
+            {c:'don',n:'MAIN-LAP',f:550,t:930,fl:'ok'},
+            {c:'dwarn',n:'BLACKBETTY',f:75,t:237,fl:'warn'},
+            {c:'doff',n:'TERTIARY',f:13.5,t:118,fl:'err',dim:true},
+          ].map(({c,n,f,t,fl,dim})=>(
+            <div key={n} style={{marginBottom:10,opacity:dim?0.4:1}}>
+              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
+                <Dot c={c}/>
+                <span style={{fontSize:9.5,color:dim?'var(--t3)':'var(--t2)',letterSpacing:'0.05em'}}>{n}</span>
+                <span style={{marginLeft:'auto',fontSize:8.5,color:'var(--t3)'}}>{f}/{t}GB</span>
+              </div>
+              <div className="sbar"><div className={`sfill sf${fl}`} style={{width:`${Math.round((1-f/t)*100)}%`}}/></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── TASKS ──
+const INIT_TASKS=[
+  {id:1,title:'Complihaus onboarding doc — final draft',ctx:'c',pri:'h',due:'FRI 06 JUN',done:false},
+  {id:2,title:'RC Sprinto evidence upload',ctx:'c',pri:'h',due:'MON 09 JUN',done:false},
+  {id:3,title:'RC annual review prep',ctx:'c',pri:'m',due:'MON 16 JUN',done:false},
+  {id:4,title:'Resolve budget-final.xlsx conflict',ctx:'c',pri:'h',due:'TODAY',done:false},
+  {id:5,title:'Q2 check-in report',ctx:'d',pri:'h',due:'FRI 06 JUN',done:false},
+  {id:6,title:'Update day job project tracker',ctx:'d',pri:'m',due:'MON 09 JUN',done:false},
+  {id:7,title:'Review Vercel deploy logs',ctx:'d',pri:'m',due:null,done:false},
+  {id:8,title:'BLACKBETTY archive offload',ctx:'p',pri:'m',due:'TONIGHT',done:false},
+  {id:9,title:'Fix .env credentials exposure',ctx:'p',pri:'h',due:'TODAY',done:false},
+  {id:10,title:'Shopify product description update',ctx:'c',pri:'l',due:null,done:false},
+];
+
+const CTX_META={c:{label:'Complihaus',cls:'tk-ctx-c'},d:{label:'Day Job',cls:'tk-ctx-d'},p:{label:'Personal',cls:'tk-ctx-p'}};
+const PRI_META={h:{label:'HIGH',cls:'tk-pri-h'},m:{label:'MED',cls:'tk-pri-m'},l:{label:'LOW',cls:'tk-pri tk-pri-l'}};
+const DUE_SOON=['TODAY','TONIGHT','FRI 06 JUN'];
+
+function Tasks({notify}){
+  const [tasks,setTasks]=useState(INIT_TASKS);
+  const toggle=(id)=>{
+    setTasks(t=>t.map(x=>{
+      if(x.id!==id)return x;
+      const next={...x,done:!x.done};
+      if(next.done)notify('Task complete',next.title,'success',3500);
+      return next;
+    }));
+  };
+
+  const cols=[
+    {key:'todo',label:'To Do',items:tasks.filter(t=>!t.done)},
+    {key:'done',label:'Done',items:tasks.filter(t=>t.done)},
+  ];
+
+  const high=tasks.filter(t=>!t.done&&t.pri==='h');
+  const byCtx=(ctx)=>tasks.filter(t=>!t.done&&t.ctx===ctx);
+
+  return(
+    <div className="tk-shell" style={{overflow:'hidden'}}>
+      <div className="tk-header">
+        <div style={{fontFamily:'Rajdhani',fontSize:24,fontWeight:700,letterSpacing:'0.04em'}}>Tasks</div>
+        <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.1em',textTransform:'uppercase'}}>
+          {tasks.filter(t=>!t.done).length} open · {tasks.filter(t=>t.done).length} done · {high.length} high priority
+        </div>
+        <div style={{marginLeft:'auto',display:'flex',gap:7}}>
+          {[['c','Complihaus',byCtx('c').length],['d','Day Job',byCtx('d').length],['p','Personal',byCtx('p').length]].map(([k,l,n])=>(
+            <div key={k} style={{display:'flex',alignItems:'center',gap:5}}>
+              <span className={`tk-ctx ${CTX_META[k].cls}`}>{l}</span>
+              <span style={{fontSize:9,color:'var(--t3)'}}>{n}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{flex:1,overflowY:'auto',display:'grid',gridTemplateColumns:'2fr 1fr',gap:14,alignContent:'start'}}>
+        {/* Open tasks — grouped by context */}
+        <div>
+          {['c','d','p'].map(ctx=>{
+            const items=tasks.filter(t=>!t.done&&t.ctx===ctx);
+            if(!items.length)return null;
+            return(
+              <div key={ctx} style={{marginBottom:18}}>
+                <div className="tk-col-head">
+                  <span className={`tk-ctx ${CTX_META[ctx].cls}`}>{CTX_META[ctx].label}</span>
+                  <span className="tk-col-count">{items.length} tasks</span>
+                </div>
+                {items.map(task=>(
+                  <div key={task.id} className="tk-card">
+                    <div className="tk-title">{task.title}</div>
+                    <div className="tk-meta">
+                      <span className={`tk-pri ${PRI_META[task.pri].cls}`}>{PRI_META[task.pri].label}</span>
+                      {task.due&&<span className={`tk-due ${DUE_SOON.includes(task.due)?'tk-due-soon':'tk-due-ok'}`}>{task.due}</span>}
+                    </div>
+                    <div className="tk-actions">
+                      <button className="btn-done btn" style={{fontSize:8,padding:'4px 9px'}} onClick={()=>toggle(task.id)}>Mark done</button>
+                      <button className="bt btn" style={{fontSize:8,padding:'4px 9px'}}>Open Notion</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Done + summary */}
+        <div>
+          <div style={{marginBottom:18}}>
+            <Panel className="pp" style={{marginBottom:14}}>
+              <PH label="// Priority Queue" col="r"/>
+              {high.slice(0,4).map(t=>(
+                <div key={t.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'1px solid rgba(0,212,255,0.05)'}}>
+                  <div style={{width:5,height:5,borderRadius:'50%',background:'var(--red)',boxShadow:'0 0 5px var(--red)',flexShrink:0}}/>
+                  <div style={{flex:1,fontSize:9.5,color:'var(--t1)',letterSpacing:'0.02em',lineHeight:1.3}}>{t.title}</div>
+                  {t.due&&<div style={{fontSize:8,color:DUE_SOON.includes(t.due)?'var(--red)':'var(--t3)',whiteSpace:'nowrap'}}>{t.due}</div>}
+                </div>
+              ))}
+            </Panel>
+          </div>
+
+          {tasks.filter(t=>t.done).length>0&&(
+            <div>
+              <div className="tk-col-head">
+                <span style={{fontSize:10,color:'var(--green)',letterSpacing:'0.1em',textTransform:'uppercase',fontWeight:700}}>// Completed</span>
+                <span className="tk-col-count">{tasks.filter(t=>t.done).length} tasks</span>
+              </div>
+              {tasks.filter(t=>t.done).map(task=>(
+                <div key={task.id} className="tk-card done">
+                  <div className="tk-title">{task.title}</div>
+                  <div className="tk-meta">
+                    <span className={`tk-ctx ${CTX_META[task.ctx].cls}`}>{CTX_META[task.ctx].label}</span>
+                    <button className="bt btn" style={{fontSize:8,padding:'3px 7px',marginLeft:'auto'}} onClick={()=>toggle(task.id)}>Undo</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Briefing({go}){
+  return(
+    <div className="b-shell">
+      <div>
+        <div className="greeting">Good morning, <span className="g-name">Benja.</span></div>
+        <div className="g-sub">// Monday 02 June 2026 · Mission briefing loaded · 3 items require immediate action</div>
+      </div>
+      <div className="b-grid">
+        <Panel className="pp b-cal">
+          <PH label="// Today's Schedule"/>
+          {[{t:'09:00',title:'Complihaus standup',loc:'Google Meet'},{t:'11:00',title:'RC — Sprinto review',loc:'In person'},{t:'14:30',title:'Day job check-in',loc:'Teams'}].map(({t,title,loc})=>(
+            <div key={t} className="cal-row"><div className="cal-time">{t}</div><div className="cal-bar"/><div className="cal-title">{title}</div><div className="cal-loc">{loc}</div></div>
+          ))}
+        </Panel>
+        <div className="b-attn">
+          <Panel className="pp" style={{flex:1}}>
+            <PH label="// Requires Action" col="r"/>
+            {[
+              {tp:'w',tx:'3 files in Rescue Inbox',act:'REVIEW',fn:()=>go('inbox')},
+              {tp:'w',tx:'2 version conflicts overnight',act:'RESOLVE',fn:()=>go('inbox')},
+              {tp:'w',tx:'blackbetty — 75 GB free',act:'QUEUED'},
+              {tp:'ok',tx:'All nodes synced 07:42'},
+            ].map(({tp,tx,act,fn},i)=>(
+              <div key={i} className="attn-item">
+                <div className={`aicon ai-${tp}`}>{tp==='ok'?'OK':'!!'}</div>
+                <div className="atxt" style={tp==='ok'?{color:'var(--t3)'}:{}}>{tx}</div>
+                {act&&<div className="aact" onClick={fn||undefined} style={!fn?{cursor:'default',color:'var(--t3)'}:{}}>{act}</div>}
+              </div>
+            ))}
+            <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid rgba(0,212,255,0.07)'}}>
+              <PH label="// Storage"/>
+              {[{c:'don',n:'MAIN-LAP',f:550,t:930,fl:'ok'},{c:'dwarn',n:'BLACKBETTY',f:75,t:237,fl:'warn'},{c:'doff',n:'TERTIARY',f:13.5,t:118,fl:'err',dim:true}].map(({c,n,f,t,fl,dim})=>(
+                <div key={n} style={{marginBottom:8,opacity:dim?0.4:1}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><Dot c={c}/><span style={{fontSize:9,color:'var(--t2)',letterSpacing:'0.06em'}}>{n}</span><span style={{marginLeft:'auto',fontSize:8.5,color:'var(--t3)'}}>{f}/{t}GB</span></div>
+                  <div className="sbar"><div className={`sfill sf${fl}`} style={{width:`${Math.round((1-f/t)*100)}%`}}/></div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+        <Panel className="pp b-focus focus-card">
+          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:14}}>
+            <div style={{flex:1}}>
+              <div className="focus-label">// Primary Objective</div>
+              <div className="focus-title">Complihaus onboarding doc</div>
+              <div className="focus-meta">DEADLINE: FRIDAY · NODE: MAIN-LAP · MODIFIED: 2D AGO</div>
+              <button className="btn bp" onClick={()=>go('desk')}>OPEN FILE →</button>
+            </div>
+            <div style={{width:46,height:46,flexShrink:0,border:'1px solid rgba(0,212,255,0.2)',background:'radial-gradient(circle,rgba(0,212,255,0.12),transparent)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,boxShadow:'inset 0 0 14px rgba(0,212,255,0.08)'}}>📄</div>
+          </div>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function Inbox({go}){
+  return(
+    <div className="ib-shell">
+      <div style={{display:'flex',alignItems:'baseline',gap:12,marginBottom:18}}>
+        <div style={{fontFamily:'Rajdhani',fontSize:24,fontWeight:700,letterSpacing:'0.04em'}}>Inbox</div>
+        <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.1em',textTransform:'uppercase'}}>7 items · nothing leaves without your eyes on it</div>
+      </div>
+      {[
+        {name:'budget-final-FINAL-v3.xlsx',sub:'VERSION CONFLICT · 2 NODES',badge:'err',bl:'CONFLICT',conf:[{col:'var(--cyan)',p:'MAIN-LAP',t:'3 DAYS AGO',isNew:true},{col:'var(--t3)',p:'ONEDRIVE',t:'2 WEEKS AGO'}]},
+        {name:'Untitled (1).docx',sub:'RESCUED FROM %TEMP% · AUTO-DELETE IN 4H',badge:'warn',bl:'TEMP RESCUE',info:'WORD DOC · 14 KB · CREATED 08:23 TODAY'},
+        {name:'Screenshot 2026-05-29 143211.png',sub:'DESKTOP · 4 DAYS · UNCLASSIFIED',badge:'off',bl:'ORPHAN',dim:true},
+      ].map(({name,sub,badge,bl,conf,info,dim})=>(
+        <div key={name} className="tri" style={{opacity:dim?0.45:1}}>
+          <div className="tri-top"><div><div className="tri-name">{name}</div><div className="tri-sub">{sub}</div></div><Bdg type={badge}>{bl}</Bdg></div>
+          {conf&&<div className="cb">{conf.map(({col,p,t,isNew})=>(<div key={p} className="crow"><span className="cdot" style={{background:col,boxShadow:isNew?`0 0 6px ${col}`:undefined}}/><span className="cpath">{p}</span><span className="ctime">{t}</span>{isNew&&<Bdg type="ok">NEWEST</Bdg>}</div>))}</div>}
+          {info&&<div className="cb"><div style={{fontSize:9.5,color:'var(--t3)',letterSpacing:'0.05em'}}>{info}</div></div>}
+          <div className="tacts">
+            {!dim&&<><button className="btn bt">File it</button><button className="btn bt">Preview</button></>}
+            {conf&&<button className="btn bt">Keep newest</button>}
+            <button className="btn bt" style={{color:'var(--t3)'}}>Bin it</button>
+            <button className="btn bt" style={{color:'var(--t3)'}}>Skip</button>
+          </div>
+        </div>
+      ))}
+      <div style={{textAlign:'center',fontSize:9,color:'var(--t3)',paddingTop:10,letterSpacing:'0.1em',textTransform:'uppercase'}}>// 4 more items · oldest first</div>
+    </div>
+  );
+}
+
+function FileMap(){
+  return(
+    <div className="fm-shell">
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:18}}>
+        <div><div style={{fontFamily:'Rajdhani',fontSize:24,fontWeight:700,letterSpacing:'0.04em'}}>File Map</div><div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.15em',textTransform:'uppercase',marginTop:2}}>// All nodes + OneDrive · 524 GB active</div></div>
+        <div style={{display:'flex',gap:8,marginTop:4}}><button className="btn bg" style={{fontSize:9,padding:'6px 12px'}}>GRAPH VIEW</button><button className="btn bp" style={{fontSize:9,padding:'6px 12px'}}>TREE VIEW</button></div>
+      </div>
+      <div className="fm-grid">
+        {[
+          {n:'complihaus\\',c:'#4f8ef7',items:[['clients\\','23'],['finance\\','41'],['ops\\','17']],tot:'81 files · 2.3 GB'},
+          {n:'rc\\',c:'#00ff88',items:[['live\\','12 ✓',true],['drafts\\','8'],['archive\\','94']],tot:'114 files · 890 MB'},
+          {n:'personal\\',c:'#bf5fff',items:[['finance\\','29'],['docs\\','156'],['media\\','2,401']],tot:'2,586 files · 48 GB'},
+          {n:'dayjob\\',c:'#ff6a5a',items:[['reports\\','34'],['comms\\','67'],['reference\\','23']],tot:'124 files · 1.1 GB'},
+        ].map(({n,c,items,tot})=>(
+          <div key={n} className="fcrd" style={{borderColor:`${c}25`}}>
+            <div className="fh"><span className="fpip" style={{background:c,boxShadow:`0 0 6px ${c}`}}/><span className="fn2">{n}</span></div>
+            {items.map(([k,v,g])=><div key={k} className="fs"><span>{k}</span><span style={g?{color:'var(--green)'}:{}}>{v}</span></div>)}
+            <div className="ft">{tot}</div>
+          </div>
+        ))}
+      </div>
+      <div className="ss">
+        <PH label="// OneDrive · 1 TB · 476 GB free"/>
+        <div className="srbow">
+          {[['8%','#4f8ef7'],['5%','#00ff88'],['32%','#bf5fff'],['7%','#ff6a5a']].map(([w,c],i)=>(
+            <div key={i} style={{width:w,background:c,boxShadow:`0 0 4px ${c}`}}/>
+          ))}
+          <div style={{flex:1,background:'var(--bg5)'}}/>
+        </div>
+        <div className="slgnd">
+          {[['#4f8ef7','COMPLIHAUS'],['#00ff88','RC'],['#bf5fff','PERSONAL'],['#ff6a5a','DAY JOB']].map(([c,l])=>(
+            <div key={l} className="slg"><span className="spip" style={{background:c,boxShadow:`0 0 4px ${c}`}}/>{l}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const AUTO_CATS=[
+  {label:'// File Intelligence',col:'c',items:[
+    {n:'Auto-classify downloads',m:'Watch Downloads · classify + move on arrival',st:'ok'},
+    {n:'Screenshot organiser',m:'Auto-rename by date/context · file to media\\',st:'ok'},
+    {n:'Duplicate detector',m:'Cross-node weekly scan · 0 dupes found',st:'ok'},
+    {n:'Large file monitor',m:'Alert on files > 500 MB',st:'ok'},
+    {n:'Version cleanup',m:'Keep last 3 · auto-archive older · nightly',st:'ok'},
+    {n:'Browser download interceptor',m:'Classify before files pile in Downloads',st:'ok'},
+    {n:'Auto-archive',m:'90+ days untouched → archive · Sunday',st:'ok'},
+  ]},
+  {label:'// Cross-Machine',col:'p',items:[
+    {n:'Smart pre-load',m:'Detect active node · cache working set',st:'ok'},
+    {n:'End-of-day backup',m:'Snapshot changed files → OneDrive 17:00',st:'ok'},
+    {n:'File lock',m:'Flag files open on one node · prevent conflicts',st:'ok'},
+    {n:'Machine handoff',m:'Switch nodes · working set follows you',st:'off',sl:'BETA'},
+  ]},
+  {label:'// PA / Productivity',col:'gold',items:[
+    {n:'Calendar prep',m:'15 min before meetings · surface relevant files',st:'ok'},
+    {n:'Focus mode',m:'Silence non-critical alerts during focus',st:'off',sl:'INACTIVE'},
+    {n:'End-of-day summary',m:'Daily wrap 17:30 · tasks + files + overdue',st:'ok'},
+    {n:'Weekly digest',m:'Mondays 08:00 · activity + completion + trends',st:'ok'},
+    {n:'Task escalator',m:'Past-due → auto-promote to HIGH',st:'ok'},
+    {n:'Overdue alert',m:'Escalating nudges as deadlines approach',st:'warn',sl:'3 OVERDUE'},
+  ]},
+  {label:'// Integrations',col:'g',items:[
+    {n:'Notion bi-directional sync',m:'Tasks sync both ways · real-time',st:'ok'},
+    {n:'Obsidian daily note',m:'Auto-create today\'s note · pull calendar in',st:'ok'},
+    {n:'Email-to-task',m:'Forward email → Notion task with context',st:'ok'},
+    {n:'Shopify daily digest',m:'Orders + revenue + issues · 08:00',st:'ok'},
+    {n:'Klaviyo campaign watcher',m:'Alert on live/error campaign states',st:'ok'},
+    {n:'Vercel deploy watcher',m:'Success/fail notifications + log links',st:'ok'},
+  ]},
+  {label:'// RC Compliance',col:'a',items:[
+    {n:'Document expiry tracker',m:'Surface RC docs needing review',st:'ok'},
+    {n:'Sprinto evidence scheduler',m:'Remind to upload evidence on cadence',st:'ok'},
+    {n:'ISO naming enforcer',m:'Flag rc\\live\\ files breaking naming rules',st:'ok'},
+    {n:'Audit trail logger',m:'Log all rc\\ moves with timestamp + user',st:'ok'},
+  ]},
+  {label:'// Security',col:'r',items:[
+    {n:'Sensitive file detector',m:'Scan for passwords + API keys + card #s',st:'ok'},
+    {n:'.env scanner',m:'Flag credentials outside secure locations',st:'warn',sl:'2 FLAGS'},
+    {n:'Offboarding checker',m:'Leaving project? Verify no data left behind',st:'off',sl:'INACTIVE'},
+  ]},
+];
+
+function Automations(){
+  return(
+    <div className="au-shell">
+      <div style={{fontFamily:'Rajdhani',fontSize:24,fontWeight:700,letterSpacing:'0.04em',marginBottom:2}}>Automations</div>
+      <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.15em',textTransform:'uppercase',marginBottom:18}}>// 34 automations · 6 categories · 2 flags</div>
+      <div className="au-grid">
+        {AUTO_CATS.map(({label,col,items})=>(
+          <div key={label}>
+            <PH label={label} col={col}/>
+            {items.map(({n,m,st,sl})=>(
+              <div key={n} className="arow">
+                <Dot c={st==='ok'?'don':st==='warn'?'dwarn':'doff'}/>
+                <div style={{flex:1}}><div className="an">{n}</div><div className={st==='warn'?'amw':'am'}>{m}</div></div>
+                {sl?<Bdg type={st==='warn'?'warn':st==='off'?'off':'ok'}>{sl}</Bdg>:<Bdg type="ok">ACTIVE</Bdg>}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [v,setV]=useState('desk');
+  const {toasts,add:notify,dismiss}=useToasts();
+
+  // Simulate an ambient notification on load
+  useEffect(()=>{
+    setTimeout(()=>notify('BLACKBETTY storage low','75 GB remaining — offload queued for tonight','warning',5000),3000);
+    setTimeout(()=>notify('2 automations flagged','.env scanner + overdue alert require attention','warning',5000),6500);
+  },[]);
+
+  const views={
+    briefing:<Briefing go={setV}/>,
+    desk:<JarvisDesk go={setV} notify={notify}/>,
+    inbox:<Inbox go={setV}/>,
+    filemap:<FileMap/>,
+    automations:<Automations/>,
+    tasks:<Tasks notify={notify}/>,
+  };
+
+  const taskCount=INIT_TASKS.filter(t=>!t.done&&t.pri==='h').length;
+
+  return(
+    <div className="shell">
+      <ToastStack toasts={toasts} dismiss={dismiss}/>
+      <aside className="sidebar">
+        <div className="reactor-wrap">
+          <div className="reactor">
+            <div className="r-ring r1"/><div className="r-ring r2"/><div className="r-ring r3"/>
+            <div className="r-core"/>
+          </div>
+          <div className="brand-text">
+            <div className="bname">Secretary</div>
+            <div className="bsub">blackbetty · sys v2.1</div>
+          </div>
+        </div>
+        <div className="bstatus"><div className="bpulse"/><Clock/>&nbsp;·&nbsp;SYSTEMS ONLINE</div>
+        <nav className="nav">
+          {[
+            {id:'briefing',ic:'◈',lb:'Morning Brief'},
+            {id:'desk',ic:'⊞',lb:'Command Desk'},
+            {id:'inbox',ic:'⬡',lb:'Inbox',n:7},
+            {id:'tasks',ic:'◧',lb:'Tasks',nr:taskCount},
+            {id:'filemap',ic:'◉',lb:'File Map'},
+            {id:'automations',ic:'⚙',lb:'Automations'},
+          ].map(({id,ic,lb,n,nr})=>(
+            <button key={id} className={`nitem${v===id?' on':''}`} onClick={()=>setV(id)}>
+              <span className="nic">{ic}</span>{lb}
+              {n&&<span className="nbadge">{n}</span>}
+              {nr&&<span className="nbadge-r">{nr}</span>}
+            </button>
+          ))}
+        </nav>
+        <div className="machines">
+          <div className="mlabel">// Connected Nodes</div>
+          {[
+            {c:'don',n:'MAIN-LAP',st:'ONLINE',sc:'var(--green)'},
+            {c:'dwarn',n:'BLACKBETTY',st:'STORAGE LOW',sc:'var(--amber)'},
+            {c:'doff',n:'TERTIARY',st:'OFFLINE',sc:'var(--t3)',dim:true},
+          ].map(({c,n,st,sc,dim})=>(
+            <div key={n} className="mrow"><Dot c={c}/><span className="mname" style={dim?{color:'var(--t3)'}:{}}>{n}</span><span className="mst" style={{color:sc}}>{st}</span></div>
+          ))}
+        </div>
+      </aside>
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        <div className="ticker">
+          <div className="ticker-inner">
+            {[...TICKER_ITEMS,...TICKER_ITEMS].map(({l,v},i)=>(
+              <div key={i} className="ti">{l}: <span>{v}</span></div>
+            ))}
+          </div>
+        </div>
+        <div style={{flex:1,overflow:'hidden'}}>
+          {views[v]}
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
