@@ -1,39 +1,36 @@
-import { generatePKCE } from './auth.js';
-import { randomBytes } from 'crypto';
-
-export default function handler(req, res) {
+// Initiates device code flow — no redirect URI needed in Azure
+export default async function handler(req, res) {
   const { MS_CLIENT_ID, MS_TENANT_ID } = process.env;
 
   if (!MS_CLIENT_ID) {
-    return res.status(500).send(`
-      <h2>MS_CLIENT_ID not set</h2>
-      <p>Add it to your Vercel environment variables, then redeploy.</p>
-    `);
+    return res.status(500).json({ error: 'MS_CLIENT_ID not configured in Vercel env vars' });
   }
 
-  const { verifier, challenge } = generatePKCE();
-  const state = randomBytes(16).toString('hex');
   const tenant = MS_TENANT_ID || 'common';
-  const redirectUri = `https://${req.headers.host}/api/callback`;
 
-  const cookie = (name, val, maxAge = 600) =>
-    `${name}=${val}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+  const r = await fetch(
+    `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/devicecode`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: MS_CLIENT_ID,
+        scope: 'https://graph.microsoft.com/Calendars.Read https://graph.microsoft.com/Tasks.ReadWrite https://graph.microsoft.com/Files.Read offline_access',
+      }),
+    }
+  );
 
-  res.setHeader('Set-Cookie', [
-    cookie('pkce_v', verifier),
-    cookie('oauth_s', state),
-  ]);
+  const data = await r.json();
 
-  const params = new URLSearchParams({
-    client_id: MS_CLIENT_ID,
-    response_type: 'code',
-    redirect_uri: redirectUri,
-    scope: 'https://graph.microsoft.com/Calendars.Read https://graph.microsoft.com/Tasks.ReadWrite https://graph.microsoft.com/Files.Read offline_access',
-    code_challenge: challenge,
-    code_challenge_method: 'S256',
-    state,
-    prompt: 'select_account',
+  if (!data.device_code) {
+    return res.status(500).json({ error: data.error_description || data.error || 'Device code request failed' });
+  }
+
+  res.json({
+    device_code: data.device_code,
+    user_code: data.user_code,
+    verification_uri: data.verification_uri,
+    expires_in: data.expires_in,
+    interval: data.interval || 5,
   });
-
-  res.redirect(`https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?${params}`);
 }

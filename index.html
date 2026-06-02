@@ -1172,6 +1172,115 @@ function mapListToCtx(listName){
   return'p';
 }
 
+function ConnectScreen({onConnected}){
+  const [phase,setPhase]=useState('idle'); // idle | loading | waiting | error | done
+  const [code,setCode]=useState('');
+  const [url,setUrl]=useState('');
+  const [errMsg,setErrMsg]=useState('');
+  const pollRef=useRef(null);
+
+  const start=async()=>{
+    setPhase('loading');
+    try{
+      const r=await fetch('/api/setup');
+      const d=await r.json();
+      if(d.error){setErrMsg(d.error);setPhase('error');return;}
+      setCode(d.user_code);
+      setUrl(d.verification_uri);
+      setPhase('waiting');
+      // Copy code to clipboard automatically
+      try{await navigator.clipboard.writeText(d.user_code);}catch(e){}
+      // Start polling
+      const interval=((d.interval||5)+1)*1000;
+      pollRef.current=setInterval(async()=>{
+        const pr=await fetch('/api/poll',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_code:d.device_code})});
+        const pd=await pr.json();
+        if(pd.status==='ok'){
+          clearInterval(pollRef.current);
+          setPhase('done');
+          setTimeout(()=>onConnected(),800);
+        } else if(pd.status==='expired'){
+          clearInterval(pollRef.current);
+          setErrMsg('Code expired. Try again.');
+          setPhase('error');
+        } else if(pd.status==='error'){
+          clearInterval(pollRef.current);
+          setErrMsg(pd.message||'Auth failed');
+          setPhase('error');
+        }
+      },interval);
+    }catch(e){setErrMsg(e.message);setPhase('error');}
+  };
+
+  useEffect(()=>()=>{if(pollRef.current)clearInterval(pollRef.current)},[]);
+
+  return(
+    <div style={{height:'100vh',width:'100vw',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',flexDirection:'column',gap:20,
+      backgroundImage:'linear-gradient(rgba(0,212,255,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.022) 1px,transparent 1px)',backgroundSize:'40px 40px'}}>
+
+      {/* Reactor */}
+      <div style={{position:'relative',width:64,height:64,marginBottom:8}}>
+        {[0,1,2].map(i=>(
+          <div key={i} style={{position:'absolute',inset:i*10,borderRadius:'50%',border:'1px solid rgba(0,212,255,'+(0.5-i*0.15)+')',animation:`spin ${8-i*2}s linear infinite`}}/>
+        ))}
+        <div style={{position:'absolute',inset:22,borderRadius:'50%',background:'radial-gradient(circle,var(--cyan),var(--cyan2))',boxShadow:'0 0 18px var(--cyan)',opacity:phase==='done'?1:0.7}}/>
+      </div>
+
+      <div style={{fontFamily:'Rajdhani',fontSize:28,fontWeight:700,color:'var(--cyan)',letterSpacing:'0.12em'}}>SECRETARY</div>
+
+      {phase==='idle'&&(
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.18em',textTransform:'uppercase',marginBottom:24}}>Microsoft 365 not connected</div>
+          <button className="btn bp" style={{fontSize:11,padding:'11px 28px'}} onClick={start}>◈ &nbsp;Connect Microsoft 365</button>
+          <div style={{marginTop:14,fontSize:8.5,color:'var(--t3)',letterSpacing:'0.06em',lineHeight:1.9}}>
+            Signs in with your Microsoft account · no passwords stored<br/>
+            Calendar · To-Do tasks · OneDrive storage
+          </div>
+        </div>
+      )}
+
+      {phase==='loading'&&(
+        <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.14em',textTransform:'uppercase'}}>
+          <div className="thinking" style={{justifyContent:'center'}}><div className="thdot"/><div className="thdot"/><div className="thdot"/></div>
+        </div>
+      )}
+
+      {phase==='waiting'&&(
+        <div style={{textAlign:'center',maxWidth:360}}>
+          <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.14em',textTransform:'uppercase',marginBottom:16}}>Step 1 — visit this URL in your browser</div>
+          <a href={url} target="_blank" rel="noreferrer"
+            style={{display:'block',padding:'10px 18px',background:'var(--bg2)',border:'1px solid var(--b2)',color:'var(--cyan)',fontFamily:"'Share Tech Mono',monospace",fontSize:11,letterSpacing:'0.06em',textDecoration:'none',marginBottom:20}}>
+            {url} ↗
+          </a>
+          <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.14em',textTransform:'uppercase',marginBottom:10}}>Step 2 — enter this code</div>
+          <div style={{fontFamily:'Rajdhani',fontSize:40,fontWeight:700,letterSpacing:'0.25em',color:'var(--cyan)',textShadow:'0 0 20px rgba(0,212,255,0.5)',background:'var(--bg2)',border:'1px solid var(--b2)',padding:'14px 28px',marginBottom:12}}>
+            {code}
+          </div>
+          <div style={{fontSize:8,color:'var(--green)',letterSpacing:'0.1em',marginBottom:20}}>✓ Code copied to clipboard</div>
+          <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'center',fontSize:9,color:'var(--t3)',letterSpacing:'0.1em'}}>
+            <div className="thinking"><div className="thdot"/><div className="thdot"/><div className="thdot"/></div>
+            WAITING FOR SIGN-IN...
+          </div>
+        </div>
+      )}
+
+      {phase==='done'&&(
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:24,color:'var(--green)',marginBottom:8}}>✓</div>
+          <div style={{fontSize:10,color:'var(--green)',letterSpacing:'0.12em',textTransform:'uppercase'}}>Connected — loading your data</div>
+        </div>
+      )}
+
+      {phase==='error'&&(
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:9,color:'var(--red)',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:16}}>{errMsg}</div>
+          <button className="btn bp" style={{fontSize:10,padding:'8px 20px'}} onClick={()=>{setPhase('idle');setErrMsg('');}}>Try again</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App(){
   const [v,setV]=useState('desk');
   const {toasts,add:notify,dismiss}=useToasts();
@@ -1230,28 +1339,7 @@ function App(){
   const taskCount=liveTasks?liveTasks.filter(t=>t.pri==='h').length:INIT_TASKS.filter(t=>!t.done&&t.pri==='h').length;
 
   if(!connected){
-    return(
-      <div style={{height:'100vh',width:'100vw',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',flexDirection:'column',gap:24}}>
-        <ToastStack toasts={toasts} dismiss={dismiss}/>
-        <div style={{position:'relative',width:72,height:72}}>
-          {[0,1,2].map(i=>(
-            <div key={i} style={{position:'absolute',inset:i*10,borderRadius:'50%',border:'1px solid rgba(0,212,255,'+(0.5-i*0.15)+')',animation:`spin ${8-i*2}s linear infinite`}}/>
-          ))}
-          <div style={{position:'absolute',inset:24,borderRadius:'50%',background:'radial-gradient(circle,var(--cyan),var(--cyan2))',boxShadow:'0 0 20px var(--cyan)'}}/>
-        </div>
-        <div style={{textAlign:'center'}}>
-          <div style={{fontFamily:'Rajdhani',fontSize:32,fontWeight:700,color:'var(--cyan)',letterSpacing:'0.1em',marginBottom:6}}>SECRETARY</div>
-          <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.2em',textTransform:'uppercase',marginBottom:28}}>Microsoft 365 not connected</div>
-          <a href="/api/setup" style={{display:'inline-flex',alignItems:'center',gap:8,padding:'11px 24px',background:'rgba(0,212,255,0.12)',border:'1px solid var(--b2)',color:'var(--cyan)',fontFamily:"'Share Tech Mono',monospace",fontSize:11,letterSpacing:'0.1em',textTransform:'uppercase',textDecoration:'none',clipPath:'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))'}}>
-            ◈ &nbsp;Connect Microsoft 365
-          </a>
-          <div style={{marginTop:16,fontSize:8.5,color:'var(--t3)',letterSpacing:'0.08em',lineHeight:1.8}}>
-            Signs in with your Microsoft account · no passwords stored<br/>
-            Calendar · To-Do tasks · OneDrive storage
-          </div>
-        </div>
-      </div>
-    );
+    return <ConnectScreen onConnected={()=>window.location.reload()}/>;
   }
 
   return(
