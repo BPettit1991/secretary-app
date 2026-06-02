@@ -384,18 +384,45 @@ function Clock(){
   return <>{t.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</>;
 }
 
-const TICKER_ITEMS=[
-  {l:'NODE STATUS',v:'3/3 · 2 ONLINE'},
-  {l:'ONEDRIVE',v:'524 GB / 1 TB'},
-  {l:'INBOX',v:'7 ITEMS PENDING'},
-  {l:'SYNC',v:'CURRENT 07:42'},
-  {l:'BLACKBETTY',v:'75 GB FREE · OFFLOAD QUEUED'},
-  {l:'NEXT EVENT',v:'COMPLIHAUS STANDUP 09:00'},
-  {l:'FOCUS',v:'COMPLIHAUS ONBOARDING DOC'},
-  {l:'TASKS DUE',v:'1 FRI · 1 MON'},
-  {l:'AUTOMATIONS',v:'34 ACTIVE · 2 FLAGS'},
-  {l:'RC COMPLIANCE',v:'ISO DOCS CURRENT'},
-];
+function buildTicker(data){
+  const gb=n=>Math.round((n||0)/1073741824);
+  const now=new Date();
+  const timeStr=now.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+
+  if(!data) return[
+    {l:'NODE STATUS',v:'LOADING...'},
+    {l:'TIME',v:timeStr},
+    {l:'AUTOMATIONS',v:'34 ACTIVE · 2 FLAGS'},
+    {l:'RC COMPLIANCE',v:'ISO DOCS CURRENT'},
+  ];
+
+  const openTasks=(data.tasks||[]).filter(t=>t.status!=='completed');
+  const highTasks=openTasks.filter(t=>t.importance==='high');
+  const usedGb=gb(data.storage?.used||0);
+  const totalGb=gb(data.storage?.total||0);
+  const freeGb=gb(data.storage?.remaining||0);
+
+  // Next upcoming event
+  const upcoming=(data.calendar||[]).find(e=>new Date(e.start)>now);
+  const nextEvent=upcoming
+    ? `${upcoming.subject.toUpperCase()} · ${new Date(upcoming.start).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})}`
+    : 'NO UPCOMING EVENTS';
+
+  // Due today/tomorrow
+  const today=now.toISOString().split('T')[0];
+  const tomorrow=new Date(Date.now()+86400000).toISOString().split('T')[0];
+  const dueSoon=openTasks.filter(t=>t.due===today||t.due===tomorrow).length;
+
+  return[
+    {l:'ONEDRIVE',v:`${usedGb} GB / ${totalGb} GB · ${freeGb} GB FREE`},
+    {l:'TASKS OPEN',v:`${openTasks.length} TOTAL · ${highTasks.length} HIGH`},
+    {l:'DUE SOON',v:dueSoon>0?`${dueSoon} DUE TODAY/TOMORROW`:'NONE DUE TODAY'},
+    {l:'NEXT EVENT',v:nextEvent},
+    {l:'SYNC',v:`CURRENT ${timeStr}`},
+    {l:'AUTOMATIONS',v:'34 ACTIVE · 2 FLAGS'},
+    {l:'RC COMPLIANCE',v:'ISO DOCS CURRENT'},
+  ];
+}
 
 const PRESET_CONVOS={
   'show inbox':{
@@ -422,7 +449,7 @@ const PRESET_CONVOS={
     ]
   },
   'end of day':{
-    response:`Running end-of-day summary for Monday 02 June 2026...\n\n<strong>What got done:</strong> 5 tasks completed, 47 files synced, 3 conflicts resolved, 2 documents rescued from temp.\n\n<strong>Outstanding:</strong> Complihaus onboarding doc is due Friday — you haven't touched it today. RC Sprinto evidence upload is due Monday.\n\n<strong>Storage:</strong> BLACKBETTY is critically low. I've queued an auto-offload of 12 GB of archive files to OneDrive overnight.\n\n<strong>Tomorrow:</strong> No calendar events before 10am. Good window to work on the onboarding doc first thing.`,
+    response:(()=>{const d=new Date();const ds=d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});return`Running end-of-day summary for ${ds}...\n\n<strong>What got done:</strong> 5 tasks completed, 47 files synced, 3 conflicts resolved, 2 documents rescued from temp.\n\n<strong>Outstanding:</strong> Complihaus onboarding doc is due Friday — you haven't touched it today. RC Sprinto evidence upload is due Monday.\n\n<strong>Storage:</strong> BLACKBETTY is critically low. I've queued an auto-offload of 12 GB of archive files to OneDrive overnight.\n\n<strong>Tomorrow:</strong> No calendar events before 10am. Good window to work on the onboarding doc first thing.`;})(),
     actions:[
       {ico:'✓',txt:'5 tasks completed today',done:true},
       {ico:'✓',txt:'Obsidian daily note updated',done:true},
@@ -1168,7 +1195,9 @@ function mapImportance(imp){
 function mapListToCtx(listName){
   const n=(listName||'').toLowerCase();
   if(n.includes('complihaus')||n.includes('rc')||n.includes('compliance'))return'c';
-  if(n.includes('day job')||n.includes('work')||n.includes('dayjob'))return'd';
+  if(n.includes('day job')||n.includes('work')||n.includes('dayjob')||n.includes('job'))return'd';
+  // "Tasks" is the default To-Do list — treat as general, show all under Personal
+  // User can rename their lists in To-Do to "Complihaus", "Day Job", "Personal" for proper grouping
   return'p';
 }
 
@@ -1387,7 +1416,7 @@ function App(){
       <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
         <div className="ticker">
           <div className="ticker-inner">
-            {[...TICKER_ITEMS,...TICKER_ITEMS].map(({l,v},i)=>(
+            {(t=>([...t,...t]))(buildTicker(data)).map(({l,v},i)=>(
               <div key={i} className="ti">{l}: <span>{v}</span></div>
             ))}
           </div>
