@@ -773,8 +773,13 @@ const CTX_META={c:{label:'Complihaus',cls:'tk-ctx-c'},d:{label:'Day Job',cls:'tk
 const PRI_META={h:{label:'HIGH',cls:'tk-pri-h'},m:{label:'MED',cls:'tk-pri-m'},l:{label:'LOW',cls:'tk-pri tk-pri-l'}};
 const DUE_SOON=['TODAY','TONIGHT','FRI 06 JUN'];
 
-function Tasks({notify}){
+function Tasks({notify,liveTasks,loading}){
   const [tasks,setTasks]=useState(INIT_TASKS);
+  // Swap to live tasks once loaded
+  const [usedLive,setUsedLive]=useState(false);
+  useEffect(()=>{
+    if(liveTasks&&!usedLive){setTasks(liveTasks);setUsedLive(true);}
+  },[liveTasks]);
   const toggle=(id)=>{
     setTasks(t=>t.map(x=>{
       if(x.id!==id)return x;
@@ -830,7 +835,7 @@ function Tasks({notify}){
                     </div>
                     <div className="tk-actions">
                       <button className="btn-done btn" style={{fontSize:8,padding:'4px 9px'}} onClick={()=>toggle(task.id)}>Mark done</button>
-                      <button className="bt btn" style={{fontSize:8,padding:'4px 9px'}}>Open Notion</button>
+                      <button className="bt btn" style={{fontSize:8,padding:'4px 9px'}} onClick={()=>window.open('https://to-do.office.com/tasks/','_blank')}>Open To-Do</button>
                     </div>
                   </div>
                 ))}
@@ -877,18 +882,27 @@ function Tasks({notify}){
   );
 }
 
-function Briefing({go}){
+function Briefing({go,events,loading}){
+  const today=new Date();
+  const dayStr=today.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   return(
     <div className="b-shell">
       <div>
         <div className="greeting">Good morning, <span className="g-name">Benja.</span></div>
-        <div className="g-sub">// Monday 02 June 2026 · Mission briefing loaded · 3 items require immediate action</div>
+        <div className="g-sub">// {dayStr} · {loading?'LOADING...':'BRIEFING READY'}</div>
       </div>
       <div className="b-grid">
         <Panel className="pp b-cal">
           <PH label="// Today's Schedule"/>
-          {[{t:'09:00',title:'Complihaus standup',loc:'Google Meet'},{t:'11:00',title:'RC — Sprinto review',loc:'In person'},{t:'14:30',title:'Day job check-in',loc:'Teams'}].map(({t,title,loc})=>(
-            <div key={t} className="cal-row"><div className="cal-time">{t}</div><div className="cal-bar"/><div className="cal-title">{title}</div><div className="cal-loc">{loc}</div></div>
+          {loading&&<div style={{fontSize:9,color:'var(--t3)',padding:'8px 0',letterSpacing:'0.08em'}}>FETCHING CALENDAR...</div>}
+          {!loading&&events&&events.length===0&&<div style={{fontSize:9,color:'var(--t3)',padding:'8px 0',letterSpacing:'0.08em'}}>NO EVENTS TODAY</div>}
+          {(events||[]).map((e,i)=>(
+            <div key={i} className="cal-row">
+              <div className="cal-time">{formatEventTime(e.start,e.isAllDay)}</div>
+              <div className="cal-bar"/>
+              <div className="cal-title">{e.subject}</div>
+              <div className="cal-loc">{e.location||''}</div>
+            </div>
           ))}
         </Panel>
         <div className="b-attn">
@@ -933,41 +947,77 @@ function Briefing({go}){
   );
 }
 
+const INBOX_INIT=[
+  {id:1,name:'budget-final-FINAL-v3.xlsx',sub:'VERSION CONFLICT · 2 NODES',badge:'err',bl:'CONFLICT',conf:[{col:'var(--cyan)',p:'MAIN-LAP',t:'3 DAYS AGO',isNew:true},{col:'var(--t3)',p:'ONEDRIVE',t:'2 WEEKS AGO'}]},
+  {id:2,name:'Untitled (1).docx',sub:'RESCUED FROM %TEMP% · AUTO-DELETE IN 4H',badge:'warn',bl:'TEMP RESCUE',info:'WORD DOC · 14 KB · CREATED 08:23 TODAY'},
+  {id:3,name:'Screenshot 2026-05-29 143211.png',sub:'DESKTOP · 4 DAYS · UNCLASSIFIED',badge:'off',bl:'ORPHAN',dim:true},
+  {id:4,name:'invoice-may-draft.pdf',sub:'DOWNLOADS · UNCLASSIFIED',badge:'off',bl:'ORPHAN',dim:true},
+];
+
 function Inbox({go}){
+  const [items,setItems]=useState(INBOX_INIT);
+  const [done,setDone]=useState([]);
+  const dismiss=(id,action)=>{
+    setDone(d=>[...d,{id,action}]);
+    setItems(i=>i.filter(x=>x.id!==id));
+  };
   return(
     <div className="ib-shell">
       <div style={{display:'flex',alignItems:'baseline',gap:12,marginBottom:18}}>
         <div style={{fontFamily:'Rajdhani',fontSize:24,fontWeight:700,letterSpacing:'0.04em'}}>Inbox</div>
-        <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.1em',textTransform:'uppercase'}}>7 items · nothing leaves without your eyes on it</div>
+        <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.1em',textTransform:'uppercase'}}>{items.length} items · nothing leaves without your eyes on it</div>
       </div>
-      {[
-        {name:'budget-final-FINAL-v3.xlsx',sub:'VERSION CONFLICT · 2 NODES',badge:'err',bl:'CONFLICT',conf:[{col:'var(--cyan)',p:'MAIN-LAP',t:'3 DAYS AGO',isNew:true},{col:'var(--t3)',p:'ONEDRIVE',t:'2 WEEKS AGO'}]},
-        {name:'Untitled (1).docx',sub:'RESCUED FROM %TEMP% · AUTO-DELETE IN 4H',badge:'warn',bl:'TEMP RESCUE',info:'WORD DOC · 14 KB · CREATED 08:23 TODAY'},
-        {name:'Screenshot 2026-05-29 143211.png',sub:'DESKTOP · 4 DAYS · UNCLASSIFIED',badge:'off',bl:'ORPHAN',dim:true},
-      ].map(({name,sub,badge,bl,conf,info,dim})=>(
-        <div key={name} className="tri" style={{opacity:dim?0.45:1}}>
+      {items.length===0&&(
+        <div style={{textAlign:'center',padding:'48px 0',fontSize:10,color:'var(--t3)',letterSpacing:'0.1em',textTransform:'uppercase'}}>
+          <div style={{fontSize:24,marginBottom:8,color:'var(--green)'}}>✓</div>
+          INBOX CLEAR
+        </div>
+      )}
+      {items.map(({id,name,sub,badge,bl,conf,info,dim})=>(
+        <div key={id} className="tri" style={{opacity:dim?0.45:1}}>
           <div className="tri-top"><div><div className="tri-name">{name}</div><div className="tri-sub">{sub}</div></div><Bdg type={badge}>{bl}</Bdg></div>
           {conf&&<div className="cb">{conf.map(({col,p,t,isNew})=>(<div key={p} className="crow"><span className="cdot" style={{background:col,boxShadow:isNew?`0 0 6px ${col}`:undefined}}/><span className="cpath">{p}</span><span className="ctime">{t}</span>{isNew&&<Bdg type="ok">NEWEST</Bdg>}</div>))}</div>}
           {info&&<div className="cb"><div style={{fontSize:9.5,color:'var(--t3)',letterSpacing:'0.05em'}}>{info}</div></div>}
           <div className="tacts">
-            {!dim&&<><button className="btn bt">File it</button><button className="btn bt">Preview</button></>}
-            {conf&&<button className="btn bt">Keep newest</button>}
-            <button className="btn bt" style={{color:'var(--t3)'}}>Bin it</button>
-            <button className="btn bt" style={{color:'var(--t3)'}}>Skip</button>
+            {!dim&&<button className="btn bt" onClick={()=>dismiss(id,'filed')}>File it</button>}
+            {conf&&<button className="btn bp" style={{fontSize:8,padding:'5px 9px'}} onClick={()=>dismiss(id,'kept')}>Keep newest</button>}
+            <button className="btn bt" style={{color:'var(--red)'}} onClick={()=>dismiss(id,'binned')}>Bin it</button>
+            <button className="btn bt" style={{color:'var(--t3)'}} onClick={()=>dismiss(id,'skipped')}>Skip</button>
           </div>
         </div>
       ))}
-      <div style={{textAlign:'center',fontSize:9,color:'var(--t3)',paddingTop:10,letterSpacing:'0.1em',textTransform:'uppercase'}}>// 4 more items · oldest first</div>
+      {done.length>0&&(
+        <div style={{marginTop:16,padding:'10px 14px',background:'var(--bg2)',border:'1px solid var(--b1)'}}>
+          <div style={{fontSize:8,color:'var(--t3)',letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:8}}>// Actioned this session</div>
+          {done.map(({id,action})=>{
+            const orig=INBOX_INIT.find(x=>x.id===id);
+            return(
+              <div key={id} style={{display:'flex',alignItems:'center',gap:8,padding:'4px 0',fontSize:9,color:'var(--t3)'}}>
+                <span style={{color:'var(--green)'}}>✓</span>
+                <span style={{flex:1}}>{orig?.name}</span>
+                <span style={{textTransform:'uppercase',letterSpacing:'0.06em'}}>{action}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function FileMap(){
+function FileMap({storage}){
+  const [view,setView]=useState('tree');
+  const usedGb=storage?.used||524;
+  const totalGb=storage?.total||1024;
+  const freeGb=storage?.remaining||(totalGb-usedGb);
   return(
     <div className="fm-shell">
       <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:18}}>
-        <div><div style={{fontFamily:'Rajdhani',fontSize:24,fontWeight:700,letterSpacing:'0.04em'}}>File Map</div><div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.15em',textTransform:'uppercase',marginTop:2}}>// All nodes + OneDrive · 524 GB active</div></div>
-        <div style={{display:'flex',gap:8,marginTop:4}}><button className="btn bg" style={{fontSize:9,padding:'6px 12px'}}>GRAPH VIEW</button><button className="btn bp" style={{fontSize:9,padding:'6px 12px'}}>TREE VIEW</button></div>
+        <div><div style={{fontFamily:'Rajdhani',fontSize:24,fontWeight:700,letterSpacing:'0.04em'}}>File Map</div><div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.15em',textTransform:'uppercase',marginTop:2}}>// OneDrive · {usedGb} GB used · {freeGb} GB free</div></div>
+        <div style={{display:'flex',gap:8,marginTop:4}}>
+          <button className={`btn ${view==='graph'?'bp':'bg'}`} style={{fontSize:9,padding:'6px 12px'}} onClick={()=>setView('graph')}>GRAPH VIEW</button>
+          <button className={`btn ${view==='tree'?'bp':'bg'}`} style={{fontSize:9,padding:'6px 12px'}} onClick={()=>setView('tree')}>TREE VIEW</button>
+        </div>
       </div>
       <div className="fm-grid">
         {[
@@ -984,7 +1034,7 @@ function FileMap(){
         ))}
       </div>
       <div className="ss">
-        <PH label="// OneDrive · 1 TB · 476 GB free"/>
+        <PH label={`// OneDrive · ${Math.round(totalGb/1024)} TB · ${freeGb} GB free`}/>
         <div className="srbow">
           {[['8%','#4f8ef7'],['5%','#00ff88'],['32%','#bf5fff'],['7%','#ff6a5a']].map(([w,c],i)=>(
             <div key={i} style={{width:w,background:c,boxShadow:`0 0 4px ${c}`}}/>
@@ -1069,26 +1119,107 @@ function Automations(){
   );
 }
 
+function useData(){
+  const [data,setData]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState(null);
+  useEffect(()=>{
+    fetch('/api/data')
+      .then(r=>r.json())
+      .then(d=>{if(d.error)throw new Error(d.error);setData(d);})
+      .catch(e=>setError(e.message))
+      .finally(()=>setLoading(false));
+  },[]);
+  return{data,loading,error};
+}
+
+function formatDue(isoDate){
+  if(!isoDate)return null;
+  const d=new Date(isoDate);
+  const today=new Date();today.setHours(0,0,0,0);
+  const diff=Math.round((d-today)/(1000*60*60*24));
+  if(diff<0)return'OVERDUE';
+  if(diff===0)return'TODAY';
+  if(diff===1)return'TOMORROW';
+  if(diff<=6)return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+  return d.toLocaleDateString('en-AU',{day:'numeric',month:'short'}).toUpperCase();
+}
+
+function formatEventTime(iso,isAllDay){
+  if(isAllDay)return'All day';
+  const d=new Date(iso);
+  return d.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+
+function mapImportance(imp){
+  if(imp==='high')return'h';
+  if(imp==='low')return'l';
+  return'm';
+}
+
+function mapListToCtx(listName){
+  const n=(listName||'').toLowerCase();
+  if(n.includes('complihaus')||n.includes('rc')||n.includes('compliance'))return'c';
+  if(n.includes('day job')||n.includes('work')||n.includes('dayjob'))return'd';
+  return'p';
+}
+
 function App(){
   const [v,setV]=useState('desk');
   const {toasts,add:notify,dismiss}=useToasts();
+  const {data,loading,error}=useData();
 
-  // Simulate an ambient notification on load
   useEffect(()=>{
-    setTimeout(()=>notify('BLACKBETTY storage low','75 GB remaining — offload queued for tonight','warning',5000),3000);
-    setTimeout(()=>notify('2 automations flagged','.env scanner + overdue alert require attention','warning',5000),6500);
-  },[]);
+    if(error){
+      notify('API unavailable','Running on demo data — check Vercel env vars','warning',6000);
+    }
+  },[error]);
+
+  useEffect(()=>{
+    if(!data)return;
+    const gb=n=>Math.round(n/1073741824);
+    const rem=gb(data.storage?.remaining||0);
+    if(rem<100)notify(`OneDrive: ${gb(data.storage?.used||0)} GB used`,'','info',4000);
+    const highTasks=(data.tasks||[]).filter(t=>t.importance==='high').length;
+    if(highTasks>0)notify(`${highTasks} high-priority task${highTasks>1?'s':''} open`,'','warning',4500);
+  },[data]);
+
+  // Normalise live tasks into the same shape Tasks component uses
+  const liveTasks=data?data.tasks.map((t,i)=>({
+    id:t.id||i,
+    title:t.title,
+    ctx:mapListToCtx(t.list),
+    pri:mapImportance(t.importance),
+    due:formatDue(t.due),
+    done:false,
+    notionUrl:null,
+  })):null;
+
+  // Today's calendar events
+  const todayEvents=data?data.calendar.filter(e=>{
+    const d=new Date(e.start);
+    const today=new Date();
+    return d.getDate()===today.getDate()&&d.getMonth()===today.getMonth();
+  }):null;
+
+  // Storage in GB
+  const gb=n=>Math.round((n||0)/1073741824);
+  const storage=data?{
+    used:gb(data.storage.used),
+    total:gb(data.storage.total),
+    remaining:gb(data.storage.remaining),
+  }:null;
 
   const views={
-    briefing:<Briefing go={setV}/>,
-    desk:<JarvisDesk go={setV} notify={notify}/>,
+    briefing:<Briefing go={setV} events={todayEvents} loading={loading}/>,
+    desk:<JarvisDesk go={setV} notify={notify} storage={storage}/>,
     inbox:<Inbox go={setV}/>,
-    filemap:<FileMap/>,
+    filemap:<FileMap storage={storage}/>,
     automations:<Automations/>,
-    tasks:<Tasks notify={notify}/>,
+    tasks:<Tasks notify={notify} liveTasks={liveTasks} loading={loading}/>,
   };
 
-  const taskCount=INIT_TASKS.filter(t=>!t.done&&t.pri==='h').length;
+  const taskCount=liveTasks?liveTasks.filter(t=>t.pri==='h').length:INIT_TASKS.filter(t=>!t.done&&t.pri==='h').length;
 
   return(
     <div className="shell">
