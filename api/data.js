@@ -89,6 +89,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('API error:', err.message);
-    res.status(500).json({ error: err.message });
+    // Return 200 with error detail so it's debuggable
+    res.status(200).json({ error: err.message, stack: err.stack?.split('\n').slice(0,3) });
   }
 }
