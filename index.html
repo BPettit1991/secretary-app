@@ -441,7 +441,7 @@ const PRESET_CONVOS={
     ]
   },
   'sync all nodes':{
-    response:`Initiating full sync across all online nodes...\n\n<strong>MAIN-LAP</strong> → OneDrive: 3 files queued (budget-2026-q2.xlsx, complihaus-onboarding-v4.docx, invoice-may-2026.pdf)\n\n<strong>BLACKBETTY</strong> → OneDrive: 1 file queued (sprinto-evidence-pack.zip)\n\n<strong>TERTIARY</strong> is currently offline. I'll queue its sync for when it comes back online and notify you.\n\nEstimated completion: <strong>4 minutes.</strong> I'll alert you when done.`,
+    response:`Initiating full sync across all online nodes...\n\n<strong>MAIN-LAP</strong> → OneDrive: 3 files queued (budget-2026-q2.xlsx, lats-onboarding-v4.docx, invoice-may-2026.pdf)\n\n<strong>BLACKBETTY</strong> → OneDrive: 1 file queued (sprinto-evidence-pack.zip)\n\n<strong>TERTIARY</strong> is currently offline. I'll queue its sync for when it comes back online and notify you.\n\nEstimated completion: <strong>4 minutes.</strong> I'll alert you when done.`,
     actions:[
       {ico:'↑',txt:'MAIN-LAP → OneDrive: 3 files uploading',done:false},
       {ico:'↑',txt:'BLACKBETTY → OneDrive: 1 file uploading',done:false},
@@ -449,7 +449,7 @@ const PRESET_CONVOS={
     ]
   },
   'end of day':{
-    response:(()=>{const d=new Date();const ds=d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});return`Running end-of-day summary for ${ds}...\n\n<strong>What got done:</strong> 5 tasks completed, 47 files synced, 3 conflicts resolved, 2 documents rescued from temp.\n\n<strong>Outstanding:</strong> Complihaus onboarding doc is due Friday — you haven't touched it today. RC Sprinto evidence upload is due Monday.\n\n<strong>Storage:</strong> BLACKBETTY is critically low. I've queued an auto-offload of 12 GB of archive files to OneDrive overnight.\n\n<strong>Tomorrow:</strong> No calendar events before 10am. Good window to work on the onboarding doc first thing.`;})(),
+    response:(()=>{const d=new Date();const ds=d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});return`Running end-of-day summary for ${ds}...\n\n<strong>What got done:</strong> 5 tasks completed, 47 files synced, 3 conflicts resolved, 2 documents rescued from temp.\n\n<strong>Outstanding:</strong> LATS onboarding doc is due Friday — you haven't touched it today. RC Sprinto evidence upload is due Monday.\n\n<strong>Storage:</strong> BLACKBETTY is critically low. I've queued an auto-offload of 12 GB of archive files to OneDrive overnight.\n\n<strong>Tomorrow:</strong> No calendar events before 10am. Good window to work on the onboarding doc first thing.`;})(),
     actions:[
       {ico:'✓',txt:'5 tasks completed today',done:true},
       {ico:'✓',txt:'Obsidian daily note updated',done:true},
@@ -457,14 +457,14 @@ const PRESET_CONVOS={
     ]
   },
   'where is the budget':{
-    response:`Found <strong>budget-2026-q2.xlsx</strong> — it exists in 2 locations:\n\n1. <strong>MAIN-LAP</strong> at C:\\Users\\benja\\complihaus\\finance\\budget-2026-q2.xlsx\n   Last modified: 1 week ago · 2.4 MB\n\n2. <strong>OneDrive</strong> — same version, last synced 1 week ago\n\nNo conflicts detected. Both copies are identical.\n\nWould you like me to open it?`,
+    response:`Found <strong>budget-2026-q2.xlsx</strong> — it exists in 2 locations:\n\n1. <strong>MAIN-LAP</strong> at C:\\Users\\benja\\lats\\finance\\budget-2026-q2.xlsx\n   Last modified: 1 week ago · 2.4 MB\n\n2. <strong>OneDrive</strong> — same version, last synced 1 week ago\n\nNo conflicts detected. Both copies are identical.\n\nWould you like me to open it?`,
     actions:[
       {ico:'✓',txt:'budget-2026-q2.xlsx located — MAIN-LAP + OneDrive',done:true},
       {ico:'✓',txt:'No version conflicts detected',done:true},
     ]
   },
   'run security scan':{
-    response:`Running full security scan across all nodes...\n\n<strong>2 issues found:</strong>\n\n⚠ <strong>.env scanner flagged 2 files</strong> with credentials outside secure locations:\n— C:\\Users\\benja\\complihaus\\integrations\\.env.local — contains SHOPIFY_API_KEY\n— C:\\Users\\benja\\dayjob\\scripts\\.env — contains DB_PASSWORD\n\nRecommendation: move both to a secrets manager or add to .gitignore immediately.\n\n<strong>No other issues.</strong> No API keys in plaintext docs, no sensitive files on BLACKBETTY unencrypted, no unusual file access patterns overnight.`,
+    response:`Running full security scan across all nodes...\n\n<strong>2 issues found:</strong>\n\n⚠ <strong>.env scanner flagged 2 files</strong> with credentials outside secure locations:\n— C:\\Users\\benja\\lats\\integrations\\.env.local — contains SHOPIFY_API_KEY\n— C:\\Users\\benja\\dayjob\\scripts\\.env — contains DB_PASSWORD\n\nRecommendation: move both to a secrets manager or add to .gitignore immediately.\n\n<strong>No other issues.</strong> No API keys in plaintext docs, no sensitive files on BLACKBETTY unencrypted, no unusual file access patterns overnight.`,
     actions:[
       {ico:'⚠',txt:'.env.local — SHOPIFY_API_KEY exposed',done:false},
       {ico:'⚠',txt:'dayjob .env — DB_PASSWORD exposed',done:false},
@@ -472,7 +472,7 @@ const PRESET_CONVOS={
     ]
   },
   'storage report':{
-    response:`Storage report as of 07:42 today:\n\n<strong>MAIN-LAP</strong> — 380 GB used / 930 GB · Healthy\nLargest consumers: personal\\media\\ (48 GB), dayjob\\ (1.1 GB), complihaus\\ (2.3 GB)\n\n<strong>BLACKBETTY</strong> — 162 GB used / 237 GB · <strong>⚠ 75 GB free — critically low</strong>\n12 GB offload queued for tonight → moving archive files to OneDrive\n\n<strong>TERTIARY</strong> — 104.5 GB used / 118 GB · Offline (last seen 3 days ago)\n\n<strong>OneDrive</strong> — 524 GB used / 1 TB · 476 GB free\n\nRecommendation: once the BLACKBETTY offload completes tonight you'll have ~87 GB free. Consider clearing Downloads on TERTIARY next time it's online.`,
+    response:`Storage report as of 07:42 today:\n\n<strong>MAIN-LAP</strong> — 380 GB used / 930 GB · Healthy\nLargest consumers: personal\\media\\ (48 GB), dayjob\\ (1.1 GB), lats\\ (2.3 GB)\n\n<strong>BLACKBETTY</strong> — 162 GB used / 237 GB · <strong>⚠ 75 GB free — critically low</strong>\n12 GB offload queued for tonight → moving archive files to OneDrive\n\n<strong>TERTIARY</strong> — 104.5 GB used / 118 GB · Offline (last seen 3 days ago)\n\n<strong>OneDrive</strong> — 524 GB used / 1 TB · 476 GB free\n\nRecommendation: once the BLACKBETTY offload completes tonight you'll have ~87 GB free. Consider clearing Downloads on TERTIARY next time it's online.`,
     actions:[
       {ico:'⚠',txt:'BLACKBETTY: offload queued — 12 GB tonight',done:false},
       {ico:'✓',txt:'MAIN-LAP: healthy',done:true},
@@ -557,10 +557,32 @@ function TypeWriter({text,onDone}){
   return <span dangerouslySetInnerHTML={{__html:shown+(done?'':'▋')}}/>;
 }
 
-function JarvisDesk({go,notify}){
+// Execute an action returned by Claude (open file/folder/URL via local bridge)
+async function executeAction(action, notify) {
+  if (!action) return;
+  try {
+    if (action.type === 'open_path') {
+      const res = await fetch('http://localhost:7474/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: action.path }),
+      });
+      if (res.ok) notify('Opening', action.path, 'success', 3000);
+      else notify('Bridge offline', 'Start local-bridge/start.bat on this machine', 'warning', 5000);
+    } else if (action.type === 'open_url') {
+      window.open(action.url, '_blank');
+    }
+  } catch {
+    notify('Bridge offline', 'Run local-bridge/start.bat on MAIN-LAP to enable file operations', 'warning', 6000);
+  }
+}
+
+function JarvisDesk({go, notify, liveData}){
   const [input,setInput]=useState('');
+  const now=new Date();
+  const greeting=now.getHours()<12?'Good morning':'Good afternoon';
   const [messages,setMessages]=useState([
-    {role:'j',text:`Good morning. All systems are online.\n\nI've prepared your morning briefing — <strong>3 items need your attention</strong> before 09:00: a version conflict in your budget file, a rescued temp document, and BLACKBETTY's storage is critically low.\n\nI've queued an auto-offload for tonight. What would you like to work on, sir?`,time:'07:42',typing:true},
+    {role:'j',text:`${greeting}. All systems are online.\n\nI'm ready. What are we working on today, sir?`,time:now.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true},
   ]);
   const [thinking,setThinking]=useState(false);
   const convoRef=useRef(null);
@@ -568,27 +590,45 @@ function JarvisDesk({go,notify}){
   const scrollBottom=()=>{if(convoRef.current)convoRef.current.scrollTop=convoRef.current.scrollHeight};
   useEffect(scrollBottom,[messages,thinking]);
 
-  const send=(cmd)=>{
+  const send=async(cmd)=>{
     const q=(cmd||input).trim();
-    if(!q)return;
+    if(!q||thinking)return;
     setInput('');
-    const userMsg={role:'u',text:q,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})};
-    setMessages(m=>[...m,userMsg]);
+    const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+    setMessages(m=>[...m,{role:'u',text:q,time:t}]);
     setThinking(true);
+
+    // Check for preset shortcut first (instant, no API cost)
     const key=Object.keys(PRESET_CONVOS).find(k=>q.toLowerCase().includes(k));
-    const delay=700+Math.random()*500;
-    setTimeout(()=>{
+    if(key){
+      const resp=PRESET_CONVOS[key];
+      const rt=typeof resp.response==='function'?resp.response():resp.response;
+      setTimeout(()=>{
+        setThinking(false);
+        setMessages(m=>[...m,{role:'j',text:rt,actions:resp.actions,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true}]);
+      },600);
+      return;
+    }
+
+    // Otherwise: real Claude
+    try{
+      const res=await fetch('/api/chat',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:q,context:liveData}),
+      });
+      const data=await res.json();
       setThinking(false);
-      const resp=key?PRESET_CONVOS[key]:{
-        response:`Understood. Processing "${q}"...\n\nI don't have a preset response for that query, but in the full system I'd scan all nodes, query Notion, check Google Calendar, and surface the most relevant result within seconds.\n\nTry one of the quick commands below, sir.`,
-        actions:[]
-      };
-      setMessages(m=>[...m,{role:'j',text:resp.response,actions:resp.actions,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true}]);
-      if(key==='run security scan')notify('Security scan complete','2 credential files flagged — action required','warning');
-      else if(key==='sync all nodes')notify('Sync initiated','4 files queuing across 2 nodes','info');
-      else if(key==='storage report')notify('BLACKBETTY critical','75 GB remaining — offload queued for tonight','warning');
-      else if(key==='check automations')notify('2 automations flagged','Overdue tasks + .env scanner need attention','warning');
-    },delay);
+      if(data.error){
+        setMessages(m=>[...m,{role:'j',text:`System error: ${data.error}`,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:false}]);
+        return;
+      }
+      setMessages(m=>[...m,{role:'j',text:data.response,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true,action:data.action}]);
+      if(data.action) executeAction(data.action, notify);
+    }catch(e){
+      setThinking(false);
+      setMessages(m=>[...m,{role:'j',text:`Connection error — ${e.message}`,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:false}]);
+    }
   };
 
   return(
@@ -596,10 +636,10 @@ function JarvisDesk({go,notify}){
       <div className="jarvis-shell" style={{borderRight:'1px solid var(--b1)'}}>
         <div className="hud-bar">
           {[
-            {n:'47',l:'Files Synced',col:'var(--cyan)'},
-            {n:'7',l:'Inbox Items',col:'var(--amber)'},
-            {n:'5',l:'Tasks Done',col:'var(--green)'},
-            {n:'3',l:'Conflicts',col:'var(--red)'},
+            {n:liveData?(liveData.tasks||[]).filter(t=>t.importance==='high').length+'':'—',l:'High Priority',col:'var(--red)'},
+            {n:liveData?(liveData.tasks||[]).length+'':'—',l:'Open Tasks',col:'var(--amber)'},
+            {n:liveData?(liveData.calendar||[]).filter(e=>{const d=new Date(e.start);const t=new Date();return d.toDateString()===t.toDateString();}).length+'':'—',l:'Today\'s Events',col:'var(--cyan)'},
+            {n:liveData?Math.round((liveData.storage?.remaining||0)/1073741824)+'GB':'—',l:'OneDrive Free',col:'var(--green)'},
           ].map(({n,l,col},i)=>(
             <React.Fragment key={l}>
               {i>0&&<div className="hud-div"/>}
@@ -622,7 +662,7 @@ function JarvisDesk({go,notify}){
           <div className="hud-div"/>
           <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.06em',textAlign:'right'}}>
             <div style={{color:'var(--cyan2)',fontSize:14,fontFamily:'Rajdhani',fontWeight:600}}><Clock/></div>
-            <div>MONDAY 02 JUN</div>
+            <div>{new Date().toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()}</div>
           </div>
         </div>
 
@@ -734,7 +774,7 @@ function JarvisDesk({go,notify}){
         <div className="side-scroll pp">
           <PH label="// Recent Files" col="gold"/>
           {[
-            ['complihaus-onboarding-v4.docx','MAIN-LAP · 2D'],
+            ['lats-onboarding-v4.docx','MAIN-LAP · 2D'],
             ['RC-ISO9001-checklist.xlsx','ONEDRIVE · 3D'],
             ['invoice-may-2026.pdf','BLACKBETTY · 5D'],
             ['sprinto-evidence-pack.zip','ONEDRIVE · 1W'],
@@ -748,7 +788,7 @@ function JarvisDesk({go,notify}){
 
           <div style={{marginTop:12}}><PH label="// Upcoming" col="a"/></div>
           {[
-            {t:'Complihaus onboarding doc',d:'FRI 06 JUN',days:'4D',col:'var(--red)'},
+            {t:'LATS onboarding doc',d:'FRI 06 JUN',days:'4D',col:'var(--red)'},
             {t:'RC Sprinto upload',d:'MON 09 JUN',days:'7D',col:'var(--amber)'},
             {t:'RC annual review',d:'MON 16 JUN',days:'14D',col:'var(--cyan)'},
           ].map(({t,d,days,col})=>(
@@ -784,7 +824,7 @@ function JarvisDesk({go,notify}){
 
 // ── TASKS ──
 const INIT_TASKS=[
-  {id:1,title:'Complihaus onboarding doc — final draft',ctx:'c',pri:'h',due:'FRI 06 JUN',done:false},
+  {id:1,title:'LATS onboarding doc — final draft',ctx:'c',pri:'h',due:'FRI 06 JUN',done:false},
   {id:2,title:'RC Sprinto evidence upload',ctx:'c',pri:'h',due:'MON 09 JUN',done:false},
   {id:3,title:'RC annual review prep',ctx:'c',pri:'m',due:'MON 16 JUN',done:false},
   {id:4,title:'Resolve budget-final.xlsx conflict',ctx:'c',pri:'h',due:'TODAY',done:false},
@@ -796,7 +836,8 @@ const INIT_TASKS=[
   {id:10,title:'Shopify product description update',ctx:'c',pri:'l',due:null,done:false},
 ];
 
-const CTX_META={c:{label:'Complihaus',cls:'tk-ctx-c'},d:{label:'Day Job',cls:'tk-ctx-d'},p:{label:'Personal',cls:'tk-ctx-p'}};
+const CTX_META={c:{label:'LATS',cls:'tk-ctx-c'},d:{label:'Rainbow',cls:'tk-ctx-d'},p:{label:'Real Life',cls:'tk-ctx-p'}};
+const CTX_COLORS={'LATS':'var(--cyan)','Rainbow':'var(--purple)','Real Life':'var(--gold)'};
 const PRI_META={h:{label:'HIGH',cls:'tk-pri-h'},m:{label:'MED',cls:'tk-pri-m'},l:{label:'LOW',cls:'tk-pri tk-pri-l'}};
 const DUE_SOON=['TODAY','TONIGHT','FRI 06 JUN'];
 
@@ -832,7 +873,7 @@ function Tasks({notify,liveTasks,loading}){
           {tasks.filter(t=>!t.done).length} open · {tasks.filter(t=>t.done).length} done · {high.length} high priority
         </div>
         <div style={{marginLeft:'auto',display:'flex',gap:7}}>
-          {[['c','Complihaus',byCtx('c').length],['d','Day Job',byCtx('d').length],['p','Personal',byCtx('p').length]].map(([k,l,n])=>(
+          {[['c','LATS',byCtx('c').length],['d','Rainbow',byCtx('d').length],['p','Real Life',byCtx('p').length]].map(([k,l,n])=>(
             <div key={k} style={{display:'flex',alignItems:'center',gap:5}}>
               <span className={`tk-ctx ${CTX_META[k].cls}`}>{l}</span>
               <span style={{fontSize:9,color:'var(--t3)'}}>{n}</span>
@@ -962,7 +1003,7 @@ function Briefing({go,events,loading}){
           <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:14}}>
             <div style={{flex:1}}>
               <div className="focus-label">// Primary Objective</div>
-              <div className="focus-title">Complihaus onboarding doc</div>
+              <div className="focus-title">LATS onboarding doc</div>
               <div className="focus-meta">DEADLINE: FRIDAY · NODE: MAIN-LAP · MODIFIED: 2D AGO</div>
               <button className="btn bp" onClick={()=>go('desk')}>OPEN FILE →</button>
             </div>
@@ -1048,7 +1089,7 @@ function FileMap({storage}){
       </div>
       <div className="fm-grid">
         {[
-          {n:'complihaus\\',c:'#4f8ef7',items:[['clients\\','23'],['finance\\','41'],['ops\\','17']],tot:'81 files · 2.3 GB'},
+          {n:'lats\\',c:'#4f8ef7',items:[['clients\\','23'],['finance\\','41'],['ops\\','17']],tot:'81 files · 2.3 GB'},
           {n:'rc\\',c:'#00ff88',items:[['live\\','12 ✓',true],['drafts\\','8'],['archive\\','94']],tot:'114 files · 890 MB'},
           {n:'personal\\',c:'#bf5fff',items:[['finance\\','29'],['docs\\','156'],['media\\','2,401']],tot:'2,586 files · 48 GB'},
           {n:'dayjob\\',c:'#ff6a5a',items:[['reports\\','34'],['comms\\','67'],['reference\\','23']],tot:'124 files · 1.1 GB'},
@@ -1194,10 +1235,9 @@ function mapImportance(imp){
 
 function mapListToCtx(listName){
   const n=(listName||'').toLowerCase();
-  if(n.includes('complihaus')||n.includes('rc')||n.includes('compliance'))return'c';
-  if(n.includes('day job')||n.includes('work')||n.includes('dayjob')||n.includes('job'))return'd';
-  // "Tasks" is the default To-Do list — treat as general, show all under Personal
-  // User can rename their lists in To-Do to "Complihaus", "Day Job", "Personal" for proper grouping
+  if(n.includes('lats')||n.includes('rc')||n.includes('compliance'))return'c';
+  if(n.includes('rainbow')||n.includes('day job')||n.includes('work')||n.includes('dayjob')||n.includes('job'))return'd';
+  // Rename your To-Do lists to "LATS", "Rainbow", "Real Life" for proper grouping
   return'p';
 }
 
@@ -1358,7 +1398,7 @@ function App(){
 
   const views={
     briefing:<Briefing go={setV} events={todayEvents} loading={loading}/>,
-    desk:<JarvisDesk go={setV} notify={notify} storage={storage}/>,
+    desk:<JarvisDesk go={setV} notify={notify} liveData={data}/>,
     inbox:<Inbox go={setV}/>,
     filemap:<FileMap storage={storage}/>,
     automations:<Automations/>,
