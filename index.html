@@ -1122,15 +1122,23 @@ function Automations(){
 function useData(){
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(true);
+  const [connected,setConnected]=useState(true);
   const [error,setError]=useState(null);
   useEffect(()=>{
     fetch('/api/data')
-      .then(r=>r.json())
-      .then(d=>{if(d.error)throw new Error(d.error);setData(d);})
+      .then(r=>{
+        if(r.status===401){setConnected(false);setLoading(false);return null;}
+        return r.json();
+      })
+      .then(d=>{
+        if(!d)return;
+        if(d.error){setError(d.error);return;}
+        setData(d);
+      })
       .catch(e=>setError(e.message))
       .finally(()=>setLoading(false));
   },[]);
-  return{data,loading,error};
+  return{data,loading,connected,error};
 }
 
 function formatDue(isoDate){
@@ -1167,7 +1175,7 @@ function mapListToCtx(listName){
 function App(){
   const [v,setV]=useState('desk');
   const {toasts,add:notify,dismiss}=useToasts();
-  const {data,loading,error}=useData();
+  const {data,loading,connected,error}=useData();
 
   useEffect(()=>{
     if(error){
@@ -1220,6 +1228,31 @@ function App(){
   };
 
   const taskCount=liveTasks?liveTasks.filter(t=>t.pri==='h').length:INIT_TASKS.filter(t=>!t.done&&t.pri==='h').length;
+
+  if(!connected){
+    return(
+      <div style={{height:'100vh',width:'100vw',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',flexDirection:'column',gap:24}}>
+        <ToastStack toasts={toasts} dismiss={dismiss}/>
+        <div style={{position:'relative',width:72,height:72}}>
+          {[0,1,2].map(i=>(
+            <div key={i} style={{position:'absolute',inset:i*10,borderRadius:'50%',border:'1px solid rgba(0,212,255,'+(0.5-i*0.15)+')',animation:`spin ${8-i*2}s linear infinite`}}/>
+          ))}
+          <div style={{position:'absolute',inset:24,borderRadius:'50%',background:'radial-gradient(circle,var(--cyan),var(--cyan2))',boxShadow:'0 0 20px var(--cyan)'}}/>
+        </div>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontFamily:'Rajdhani',fontSize:32,fontWeight:700,color:'var(--cyan)',letterSpacing:'0.1em',marginBottom:6}}>SECRETARY</div>
+          <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.2em',textTransform:'uppercase',marginBottom:28}}>Microsoft 365 not connected</div>
+          <a href="/api/setup" style={{display:'inline-flex',alignItems:'center',gap:8,padding:'11px 24px',background:'rgba(0,212,255,0.12)',border:'1px solid var(--b2)',color:'var(--cyan)',fontFamily:"'Share Tech Mono',monospace",fontSize:11,letterSpacing:'0.1em',textTransform:'uppercase',textDecoration:'none',clipPath:'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))'}}>
+            ◈ &nbsp;Connect Microsoft 365
+          </a>
+          <div style={{marginTop:16,fontSize:8.5,color:'var(--t3)',letterSpacing:'0.08em',lineHeight:1.8}}>
+            Signs in with your Microsoft account · no passwords stored<br/>
+            Calendar · To-Do tasks · OneDrive storage
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return(
     <div className="shell">

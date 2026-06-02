@@ -8,7 +8,7 @@ async function getCalendarEvents(token) {
     `https://graph.microsoft.com/v1.0/me/calendarView` +
     `?startDateTime=${now.toISOString()}&endDateTime=${end.toISOString()}` +
     `&$orderby=start/dateTime&$top=20` +
-    `&$select=subject,start,end,location,isAllDay,bodyPreview`,
+    `&$select=subject,start,end,location,isAllDay`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const data = await res.json();
@@ -29,23 +29,21 @@ async function getTasks(token) {
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const lists = await listsRes.json();
-  if (!listsRes.ok) throw new Error(`Tasks lists: ${lists.error?.message}`);
+  if (!listsRes.ok) throw new Error(`Task lists: ${lists.error?.message}`);
 
   const taskPromises = (lists.value || []).map(list =>
     fetch(
       `https://graph.microsoft.com/v1.0/me/todo/lists/${list.id}/tasks` +
-      `?$filter=status ne 'completed'` +
-      `&$select=title,importance,status,dueDateTime,categories&$top=50`,
+      `?$filter=status ne 'completed'&$select=title,importance,status,dueDateTime&$top=50`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
       .then(r => r.json())
       .then(d => (d.value || []).map(t => ({
         id: t.id,
         title: t.title,
-        importance: t.importance, // 'high' | 'normal' | 'low'
+        importance: t.importance,
         status: t.status,
         due: t.dueDateTime?.dateTime?.split('T')[0] || null,
-        categories: t.categories || [],
         list: list.displayName,
       })))
   );
@@ -74,22 +72,20 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=300');
 
   try {
-    const token = await getAccessToken();
+    const { accessToken } = await getAccessToken(req);
+
     const [calendar, tasks, storage] = await Promise.all([
-      getCalendarEvents(token),
-      getTasks(token),
-      getStorage(token),
+      getCalendarEvents(accessToken),
+      getTasks(accessToken),
+      getStorage(accessToken),
     ]);
 
-    res.json({
-      calendar,
-      tasks,
-      storage,
-      timestamp: new Date().toISOString(),
-    });
+    res.json({ calendar, tasks, storage, timestamp: new Date().toISOString() });
   } catch (err) {
+    if (err.message === 'NOT_CONNECTED' || err.message === 'NOT_CONFIGURED') {
+      return res.status(401).json({ error: err.message });
+    }
     console.error('API error:', err.message);
-    // Return 200 with error detail so it's debuggable
-    res.status(200).json({ error: err.message, stack: err.stack?.split('\n').slice(0,3) });
+    res.status(500).json({ error: err.message });
   }
 }

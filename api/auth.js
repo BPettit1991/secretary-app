@@ -1,45 +1,54 @@
-export async function getAccessToken() {
-  const {
-    MS_TENANT_ID,
-    MS_CLIENT_ID,
-    MS_CLIENT_SECRET,
-    MS_REFRESH_TOKEN,
-  } = process.env;
+import { createHash, randomBytes } from 'crypto';
 
-  if (!MS_CLIENT_ID || !MS_REFRESH_TOKEN) {
-    throw new Error('Missing MS_CLIENT_ID or MS_REFRESH_TOKEN env vars');
-  }
+export function generatePKCE() {
+  const verifier = randomBytes(32).toString('base64url');
+  const challenge = createHash('sha256').update(verifier).digest('base64url');
+  return { verifier, challenge };
+}
 
-  // Personal Microsoft accounts must use 'consumers', work/school use tenant ID or 'common'
+export function parseCookies(req) {
+  return Object.fromEntries(
+    (req?.headers?.cookie || '').split(';').flatMap(c => {
+      const idx = c.indexOf('=');
+      if (idx < 0) return [];
+      return [[c.slice(0, idx).trim(), decodeURIComponent(c.slice(idx + 1).trim())]];
+    })
+  );
+}
+
+export async function getAccessToken(req) {
+  const { MS_CLIENT_ID, MS_TENANT_ID } = process.env;
+
+  if (!MS_CLIENT_ID) throw new Error('NOT_CONFIGURED');
+
+  const cookies = parseCookies(req);
+  const refreshToken = cookies.ms_rt;
+
+  if (!refreshToken) throw new Error('NOT_CONNECTED');
+
   const tenant = MS_TENANT_ID || 'common';
-
-  const body = new URLSearchParams({
-    grant_type: 'refresh_token',
-    client_id: MS_CLIENT_ID,
-    refresh_token: MS_REFRESH_TOKEN,
-    scope: 'https://graph.microsoft.com/Calendars.Read https://graph.microsoft.com/Tasks.ReadWrite https://graph.microsoft.com/Files.Read offline_access',
-  });
-
-  // Only include client_secret if provided (confidential client)
-  if (MS_CLIENT_SECRET) {
-    body.set('client_secret', MS_CLIENT_SECRET);
-  }
 
   const res = await fetch(
     `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: MS_CLIENT_ID,
+        refresh_token: refreshToken,
+        scope: 'https://graph.microsoft.com/Calendars.Read https://graph.microsoft.com/Tasks.ReadWrite https://graph.microsoft.com/Files.Read offline_access',
+      }),
     }
   );
 
   const data = await res.json();
-
   if (!data.access_token) {
-    const detail = data.error_description || data.error || JSON.stringify(data);
-    throw new Error(`Token refresh failed: ${detail}`);
+    const msg = data.error_description?.split('\r\n')[0] || data.error || 'unknown';
+    // If refresh token is stale, signal re-auth
+    if (data.error === 'invalid_grant') throw new Error('NOT_CONNECTED');
+    throw new Error(`Token error: ${msg}`);
   }
 
-  return data.access_token;
+  return { accessToken: data.access_token, newRefreshToken: data.refresh_token };
 }
