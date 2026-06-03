@@ -24,9 +24,12 @@ export default async function handler(req, res) {
 
   if (data.refresh_token) {
     // Auth complete — set cookie and signal success
+    // Omit Secure flag when running over HTTP (self-hosted LAN)
+    const isHttps = (req.headers['x-forwarded-proto'] === 'https') || (req.connection?.encrypted);
     const cookieVal = encodeURIComponent(data.refresh_token);
+    const secure = isHttps ? '; Secure' : '';
     res.setHeader('Set-Cookie',
-      `ms_rt=${cookieVal}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${60 * 60 * 24 * 30}`
+      `ms_rt=${cookieVal}; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=${60 * 60 * 24 * 30}`
     );
     return res.json({ status: 'ok' });
   }
