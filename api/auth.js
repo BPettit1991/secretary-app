@@ -28,17 +28,20 @@ export async function getAccessToken(req) {
 
   const tenant = MS_TENANT_ID || 'common';
 
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    client_id: MS_CLIENT_ID,
+    client_secret: process.env.MS_CLIENT_SECRET || '',
+    refresh_token: refreshToken,
+    scope: 'https://graph.microsoft.com/Calendars.ReadWrite https://graph.microsoft.com/Tasks.ReadWrite https://graph.microsoft.com/Files.Read https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/Mail.Send offline_access',
+  });
+
   const res = await fetch(
     `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        client_id: MS_CLIENT_ID,
-        refresh_token: refreshToken,
-        scope: 'https://graph.microsoft.com/Calendars.ReadWrite https://graph.microsoft.com/Tasks.ReadWrite https://graph.microsoft.com/Files.Read https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/Mail.Send offline_access',
-      }),
+      body: params,
     }
   );
 
