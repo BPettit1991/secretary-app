@@ -1493,10 +1493,10 @@ function mapListToCtx(listName){
 
 // ── NODE PANEL — live bridge status for all machines ──
 const NODE_DEFS = [
-  { id: 'MAIN-LAP',   bridge: 'local',   os: 'windows', icon: '⊞' },
-  { id: 'BLACKBETTY', bridge: 'proxy',   os: 'windows', icon: '⊞' },
-  { id: 'MAC-MINI',   bridge: 'proxy',   os: 'macos',   icon: '⌘' },
-  { id: 'TERTIARY',   bridge: 'proxy',   os: 'windows', icon: '⊞' },
+  { id: 'MAIN-LAP',   bridge: 'local',   os: 'windows', icon: '⊞', ip: '192.168.0.22' },
+  { id: 'BLACKBETTY', bridge: 'proxy',   os: 'windows', icon: '⊞', ip: null },
+  { id: 'MAC-MINI',   bridge: 'proxy',   os: 'macos',   icon: '⌘', ip: '100.90.48.124', tailscale: true },
+  { id: 'TERTIARY',   bridge: 'proxy',   os: 'windows', icon: '⊞', ip: null },
 ];
 
 function NodePanel(){
@@ -1543,14 +1543,18 @@ function NodePanel(){
   return(
     <div className="machines">
       <div className="mlabel">// Connected Nodes</div>
-      {nodes.map(({id,os,icon,status,info,detail})=>{
+      {nodes.map(({id,os,icon,ip,tailscale,status,info})=>{
         const s=statusStyle[status]||statusStyle.offline;
         return(
-          <div key={id} className="mrow" style={{opacity:status==='offline'?0.4:1}}>
-            <Dot c={s.dot}/>
-            <span style={{fontSize:9,color:'var(--t3)',marginRight:2}}>{icon}</span>
-            <span className="mname">{id}</span>
-            <span className="mst" style={{color:s.col,fontSize:8}}>{info||'—'}</span>
+          <div key={id} style={{marginBottom:8,opacity:status==='offline'?0.38:1}}>
+            <div className="mrow" style={{marginBottom:2}}>
+              <Dot c={s.dot}/>
+              <span style={{fontSize:9,color:'var(--t3)',marginRight:2}}>{icon}</span>
+              <span className="mname">{id}</span>
+              {tailscale&&<span style={{fontSize:7,color:'var(--purple)',border:'1px solid rgba(191,95,255,0.3)',padding:'0 4px',letterSpacing:'0.06em'}}>TS</span>}
+              <span className="mst" style={{color:s.col,fontSize:8}}>{status==='checking'?'...':info||'OFFLINE'}</span>
+            </div>
+            {ip&&status!=='offline'&&<div style={{fontSize:7.5,color:'var(--t3)',paddingLeft:22,letterSpacing:'0.04em'}}>{ip}</div>}
           </div>
         );
       })}
