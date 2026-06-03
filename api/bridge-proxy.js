@@ -30,9 +30,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    // localtunnel requires this header to bypass the interstitial page
+    if (baseUrl.includes('loca.lt')) headers['bypass-tunnel-reminder'] = 'true';
+
     const r = await fetch(`${baseUrl}${endpoint}`, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(8000),
     });
