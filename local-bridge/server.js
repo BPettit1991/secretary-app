@@ -187,6 +187,34 @@ const server = http.createServer(async (req, res) => {
     return json(res, readFile(filePath));
   }
 
+  // GET /screenshot — capture the screen as base64 PNG
+  if (req.method === 'GET' && url.pathname === '/screenshot') {
+    if (process.platform !== 'win32') {
+      return json(res, { error: 'Screenshots only supported on Windows' });
+    }
+    const ps = `
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+$screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+$bmp = New-Object System.Drawing.Bitmap($screen.Width, $screen.Height)
+$gfx = [System.Drawing.Graphics]::FromImage($bmp)
+$gfx.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
+$ms = New-Object System.IO.MemoryStream
+$bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
+$bytes = $ms.ToArray()
+[System.Convert]::ToBase64String($bytes)
+    `.trim();
+    return new Promise(resolve => {
+      exec(`powershell.exe -NonInteractive -NoProfile -Command "${ps.replace(/\n/g,' ').replace(/"/g,'\\"')}"`,
+        { maxBuffer: 10 * 1024 * 1024, timeout: 15000 },
+        (err, stdout) => {
+          if (err) return resolve(json(res, { error: err.message }));
+          resolve(json(res, { image: stdout.trim(), mediaType: 'image/png' }));
+        }
+      );
+    });
+  }
+
   if (req.method === 'POST' && url.pathname === '/write') {
     const body = await parseBody(req);
     if (!body.path || body.content === undefined) return json(res, { error: 'path and content required' }, 400);

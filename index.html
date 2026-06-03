@@ -143,7 +143,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;b
 @keyframes toast-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
 
 /* ═══ JARVIS COMMAND INTERFACE ═══ */
-.jarvis-shell{display:flex;flex-direction:column;height:100%;padding:0}
+.jarvis-shell{display:flex;flex-direction:column;height:100%;padding:0;min-height:0;overflow:hidden}
 
 /* Top HUD bar */
 .hud-bar{
@@ -163,7 +163,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .hr-core{position:absolute;inset:16px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.4),rgba(0,212,255,0.1));box-shadow:0 0 10px rgba(0,212,255,0.4)}
 
 /* Conversation area */
-.convo{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:12px}
+.convo{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:12px;min-height:0}
 .convo::-webkit-scrollbar{width:3px}
 .convo::-webkit-scrollbar-thumb{background:var(--b1)}
 
@@ -222,6 +222,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .qcmds{padding:8px 24px;display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--b1);background:var(--bg);flex-shrink:0}
 .qcmd{padding:5px 11px;border:1px solid var(--b1);background:var(--bg2);color:var(--t3);font-size:9px;letter-spacing:0.07em;text-transform:uppercase;cursor:pointer;transition:all 0.13s;font-family:'Share Tech Mono',monospace;clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,0 100%)}
 .qcmd:hover{border-color:var(--b2);color:var(--cyan);background:var(--cyan4)}
+
+/* Vision attachment */
+.vision-thumb{width:56px;height:42px;object-fit:cover;border:1px solid var(--b2);cursor:pointer;flex-shrink:0;opacity:0.85}
+.vision-thumb:hover{opacity:1;border-color:var(--cyan)}
+.cmd-attach{display:flex;align-items:center;gap:8px;padding:6px 24px 0;flex-shrink:0}
+.vision-btn{background:var(--bg2);border:1px solid var(--b1);color:var(--t3);font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:4px 10px;font-family:inherit;transition:all 0.12s;clip-path:polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))}
+.vision-btn:hover{border-color:var(--b2);color:var(--cyan)}
 
 /* Command input */
 .cmd-bar{
@@ -672,24 +679,92 @@ function JarvisDesk({go, notify, liveData}){
   const [thinking,setThinking]=useState(false);
   const [thinkingLabel,setThinkingLabel]=useState('Processing');
   const [chatHistory,setChatHistory]=useState([]);
+  const [attachment,setAttachment]=useState(null); // {image, mediaType, preview}
   const convoRef=useRef(null);
   const inputRef=useRef(null);
+  const fileRef=useRef(null);
+
+  // Handle paste (images) and drag-drop
+  useEffect(()=>{
+    const onPaste=e=>{
+      const item=[...e.clipboardData.items].find(i=>i.type.startsWith('image/'));
+      if(item){
+        const blob=item.getAsFile();
+        const reader=new FileReader();
+        reader.onload=ev=>{
+          const b64=ev.target.result.split(',')[1];
+          setAttachment({image:b64,mediaType:item.type,preview:ev.target.result});
+        };
+        reader.readAsDataURL(blob);
+      }
+    };
+    window.addEventListener('paste',onPaste);
+    return()=>window.removeEventListener('paste',onPaste);
+  },[]);
+
+  const takeScreenshot=async()=>{
+    try{
+      const r=await fetch('http://localhost:7474/screenshot');
+      const d=await r.json();
+      if(d.image){
+        setAttachment({image:d.image,mediaType:'image/png',preview:`data:image/png;base64,${d.image}`});
+        notify('Screenshot captured','Attached to next message','info',2500);
+      } else {
+        notify('Screenshot failed',d.error||'Bridge error','warning',3000);
+      }
+    }catch{
+      notify('Bridge offline','Run local-bridge on this machine','warning',4000);
+    }
+  };
+
+  const handleFile=e=>{
+    const file=e.target.files?.[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const b64=ev.target.result.split(',')[1];
+      setAttachment({image:b64,mediaType:file.type,preview:ev.target.result});
+    };
+    reader.readAsDataURL(file);
+  };
 
   const scrollBottom=()=>{if(convoRef.current)convoRef.current.scrollTop=convoRef.current.scrollHeight};
   useEffect(scrollBottom,[messages,thinking]);
 
   const send=async(cmd)=>{
     const q=(cmd||input).trim();
-    if(!q||thinking)return;
+    if((!q&&!attachment)||thinking)return;
     setInput('');
+    const currentAttachment=attachment;
+    setAttachment(null);
     inputRef.current?.focus();
     const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
-    setMessages(m=>[...m,{role:'u',text:q,time:t}]);
+    setMessages(m=>[...m,{role:'u',text:q||'[image]',time:t,image:currentAttachment?.preview}]);
     setThinking(true);
     setThinkingLabel('Processing');
 
     try{
-      setThinkingLabel('Thinking');
+      setThinkingLabel(currentAttachment?'Analysing image':'Thinking');
+
+      // If there's an image attachment, use vision endpoint
+      if(currentAttachment){
+        const vRes=await fetch('/api/vision',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            image:currentAttachment.image,
+            mediaType:currentAttachment.mediaType,
+            prompt:q||'What do you see? Surface anything actionable.',
+            context:liveData,
+          }),
+        });
+        const vData=await vRes.json();
+        setThinking(false);
+        const mt=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+        setMessages(m=>[...m,{role:'j',text:vData.response||vData.error||'Vision error',time:mt,typing:true}]);
+        return;
+      }
+
       const res=await fetch('/api/chat',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -738,7 +813,7 @@ function JarvisDesk({go, notify, liveData}){
   };
 
   return(
-    <div style={{display:'grid',gridTemplateColumns:'1fr 252px',height:'100%',overflow:'hidden'}}>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 252px',height:'100%',overflow:'hidden',minHeight:0}}>
       <div className="jarvis-shell" style={{borderRight:'1px solid var(--b1)'}}>
         <div className="hud-bar">
           {[
@@ -778,6 +853,7 @@ function JarvisDesk({go, notify, liveData}){
               {m.role==='u'?(
                 <div className="msg-user">
                   <div>
+                    {m.image&&<img src={m.image} style={{maxWidth:240,maxHeight:160,display:'block',marginBottom:5,border:'1px solid var(--b2)',objectFit:'cover'}} alt=""/>}
                     <div className="bubble-user">{m.text}</div>
                     <div className="msg-time">{m.time}</div>
                   </div>
@@ -839,6 +915,14 @@ function JarvisDesk({go, notify, liveData}){
           ))}
         </div>
 
+        {attachment&&(
+          <div className="cmd-attach">
+            <img src={attachment.preview} className="vision-thumb" alt="attachment"/>
+            <span style={{fontSize:8.5,color:'var(--cyan)',letterSpacing:'0.06em'}}>IMAGE ATTACHED</span>
+            <button className="vision-btn" onClick={()=>setAttachment(null)}>✕ Remove</button>
+          </div>
+        )}
+
         <div className="cmd-bar">
           <div className="cmd-input-row">
             <span className="cmd-prompt">›_</span>
@@ -851,13 +935,17 @@ function JarvisDesk({go, notify, liveData}){
               autoFocus
               ref={inputRef}
             />
+            <button className="vision-btn" onClick={takeScreenshot} title="Capture screen">⊡</button>
+            <button className="vision-btn" onClick={()=>fileRef.current?.click()} title="Attach image">⊕</button>
+            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleFile}/>
             <button className="btn bp" style={{padding:'6px 14px',fontSize:9}} onClick={()=>send()}>SEND</button>
           </div>
           <div className="cmd-line"/>
           <div className="cmd-hints">
             <div className="cmd-hint"><span>ENTER</span> to send</div>
-            <div className="cmd-hint"><span>QUICK CMDS</span> above</div>
-            <div className="cmd-hint"><span>34</span> automations running</div>
+            <div className="cmd-hint"><span>⊡</span> screenshot</div>
+            <div className="cmd-hint"><span>⊕</span> attach image</div>
+            <div className="cmd-hint"><span>PASTE</span> image directly</div>
           </div>
         </div>
       </div>
