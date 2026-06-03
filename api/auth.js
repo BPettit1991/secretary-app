@@ -37,7 +37,7 @@ export async function getAccessToken(req) {
         grant_type: 'refresh_token',
         client_id: MS_CLIENT_ID,
         refresh_token: refreshToken,
-        scope: 'https://graph.microsoft.com/Calendars.Read https://graph.microsoft.com/Tasks.ReadWrite https://graph.microsoft.com/Files.Read offline_access',
+        scope: 'https://graph.microsoft.com/Calendars.ReadWrite https://graph.microsoft.com/Tasks.ReadWrite https://graph.microsoft.com/Files.Read https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/Mail.Send offline_access',
       }),
     }
   );

@@ -490,14 +490,14 @@ const PRESET_CONVOS={
 };
 
 const QUICK_CMDS=[
-  'show inbox',
-  'find rc doc',
-  'sync all nodes',
-  'end of day',
-  'where is the budget',
-  'run security scan',
-  'check automations',
+  'what\'s on today',
+  'show my open tasks',
+  'check my emails',
+  'end of day summary',
+  'open my LATS folder',
+  'what should I focus on',
   'storage report',
+  'run security scan',
 ];
 
 // ── TOAST SYSTEM ──
@@ -539,6 +539,20 @@ function ToastStack({toasts,dismiss}){
   );
 }
 
+// Simple markdown renderer: **bold**, *italic*, \n\n paragraphs, - lists
+function renderMarkdown(text){
+  if(!text)return'';
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code style="background:var(--bg3);padding:1px 5px;font-size:10px;border:1px solid var(--b1)">$1</code>')
+    .replace(/^- (.+)$/gm,'<div style="display:flex;gap:6px;margin:2px 0"><span style="color:var(--cyan);flex-shrink:0">▸</span><span>$1</span></div>')
+    .replace(/^(\d+)\. (.+)$/gm,'<div style="display:flex;gap:6px;margin:2px 0"><span style="color:var(--cyan2);flex-shrink:0;width:14px;text-align:right">$1.</span><span>$2</span></div>')
+    .replace(/\n\n/g,'<br/><br/>')
+    .replace(/\n/g,'<br/>');
+}
+
 function TypeWriter({text,onDone}){
   const [shown,setShown]=useState('');
   const [done,setDone]=useState(false);
@@ -546,7 +560,7 @@ function TypeWriter({text,onDone}){
     setShown('');setDone(false);
     let i=0;
     const raw=text.replace(/<[^>]+>/g,'');
-    const speed=raw.length>300?10:16;
+    const speed=raw.length>400?6:raw.length>200?10:14;
     const interval=setInterval(()=>{
       i++;
       setShown(text.slice(0,i));
@@ -554,26 +568,79 @@ function TypeWriter({text,onDone}){
     },speed);
     return()=>clearInterval(interval);
   },[text]);
-  return <span dangerouslySetInnerHTML={{__html:shown+(done?'':'▋')}}/>;
+  return <span dangerouslySetInnerHTML={{__html:renderMarkdown(shown)+(done?'':'▋')}}/>;
 }
 
-// Execute an action returned by Claude (open file/folder/URL via local bridge)
-async function executeAction(action, notify) {
-  if (!action) return;
-  try {
-    if (action.type === 'open_path') {
-      const res = await fetch('http://localhost:7474/open', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: action.path }),
-      });
-      if (res.ok) notify('Opening', action.path, 'success', 3000);
-      else notify('Bridge offline', 'Start local-bridge/start.bat on this machine', 'warning', 5000);
-    } else if (action.type === 'open_url') {
-      window.open(action.url, '_blank');
+function ExecutedBadge({items}){
+  if(!items||!items.length)return null;
+  const icons={task_created:'✓',task_completed:'✓',event_created:'◈',email_sent:'↑'};
+  const labels={task_created:'Task created',task_completed:'Task done',event_created:'Event created',email_sent:'Email sent'};
+  return(
+    <div style={{display:'flex',flexWrap:'wrap',gap:5,marginTop:8}}>
+      {items.map((it,i)=>(
+        <div key={i} style={{display:'flex',alignItems:'center',gap:5,padding:'3px 8px',background:'var(--green2)',border:'1px solid rgba(0,255,136,0.2)',fontSize:8.5,color:'var(--green)',letterSpacing:'0.06em'}}>
+          <span>{icons[it.type]||'✓'}</span>
+          <span>{labels[it.type]||it.type}: {it.title||it.subject||it.to||''}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DraftEmailCard({draft,onSend,onDiscard}){
+  const [sending,setSending]=useState(false);
+  const handleSend=async()=>{
+    setSending(true);
+    try{
+      const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:`Send this email immediately: To: ${draft.to}, Subject: ${draft.subject}, Body: ${draft.body}`,context:null})});
+      const d=await res.json();
+      onSend(d);
+    }finally{setSending(false);}
+  };
+  return(
+    <div style={{marginTop:10,background:'var(--bg3)',border:'1px solid var(--b2)',padding:'12px 14px'}}>
+      <div style={{fontSize:8,color:'var(--cyan2)',letterSpacing:'0.14em',textTransform:'uppercase',marginBottom:8}}>// DRAFT EMAIL — REVIEW BEFORE SENDING</div>
+      <div style={{fontSize:9,color:'var(--t3)',marginBottom:4}}>TO: <span style={{color:'var(--t1)'}}>{draft.to||'(no recipient)'}</span></div>
+      <div style={{fontSize:9,color:'var(--t3)',marginBottom:8}}>SUBJECT: <span style={{color:'var(--t1)'}}>{draft.subject}</span></div>
+      <div style={{fontSize:10,color:'var(--t2)',lineHeight:1.6,whiteSpace:'pre-wrap',marginBottom:12,borderTop:'1px solid var(--b1)',paddingTop:8}}>{draft.body}</div>
+      <div style={{display:'flex',gap:7}}>
+        <button className="btn bp" style={{fontSize:8,padding:'5px 12px'}} onClick={handleSend} disabled={sending}>
+          {sending?'Sending...':'↑ Send'}
+        </button>
+        <button className="bt btn" style={{fontSize:8,padding:'5px 10px'}} onClick={onDiscard}>Discard</button>
+      </div>
+    </div>
+  );
+}
+
+async function executeClientActions(actions, notify) {
+  for (const action of actions || []) {
+    try {
+      if (action.type === 'open_path') {
+        const res = await fetch('http://localhost:7474/open', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ path: action.path }),
+        });
+        if (res.ok) notify('Opened', action.path, 'success', 3000);
+        else notify('Bridge offline', 'Run local-bridge/start.bat to enable file ops', 'warning', 5000);
+      } else if (action.type === 'open_url') {
+        window.open(action.url, '_blank');
+        notify('Opened', action.url, 'info', 2500);
+      } else if (action.type === 'run_command') {
+        const res = await fetch('http://localhost:7474/run', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ command: action.command }),
+        });
+        const d = await res.json().catch(()=>({}));
+        if (d.ok) notify('Command run', action.description || action.command.slice(0,40), 'success', 3000);
+        else notify('Command failed', d.error || d.stderr || '', 'error', 5000);
+      }
+    } catch {
+      if (action.type !== 'draft_email') {
+        notify('Bridge offline', 'Run local-bridge/start.bat on this machine', 'warning', 5000);
+      }
     }
-  } catch {
-    notify('Bridge offline', 'Run local-bridge/start.bat on MAIN-LAP to enable file operations', 'warning', 6000);
   }
 }
 
@@ -582,10 +649,13 @@ function JarvisDesk({go, notify, liveData}){
   const now=new Date();
   const greeting=now.getHours()<12?'Good morning':'Good afternoon';
   const [messages,setMessages]=useState([
-    {role:'j',text:`${greeting}. All systems are online.\n\nI'm ready. What are we working on today, sir?`,time:now.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true},
+    {role:'j',text:`${greeting}. All systems online.\n\nI'm ready — calendar, tasks, files, email. What are we doing today?`,time:now.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true},
   ]);
   const [thinking,setThinking]=useState(false);
+  const [thinkingLabel,setThinkingLabel]=useState('Processing');
+  const [chatHistory,setChatHistory]=useState([]);
   const convoRef=useRef(null);
+  const inputRef=useRef(null);
 
   const scrollBottom=()=>{if(convoRef.current)convoRef.current.scrollTop=convoRef.current.scrollHeight};
   useEffect(scrollBottom,[messages,thinking]);
@@ -594,40 +664,58 @@ function JarvisDesk({go, notify, liveData}){
     const q=(cmd||input).trim();
     if(!q||thinking)return;
     setInput('');
+    inputRef.current?.focus();
     const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
     setMessages(m=>[...m,{role:'u',text:q,time:t}]);
     setThinking(true);
+    setThinkingLabel('Processing');
 
-    // Check for preset shortcut first (instant, no API cost)
-    const key=Object.keys(PRESET_CONVOS).find(k=>q.toLowerCase().includes(k));
-    if(key){
-      const resp=PRESET_CONVOS[key];
-      const rt=typeof resp.response==='function'?resp.response():resp.response;
-      setTimeout(()=>{
-        setThinking(false);
-        setMessages(m=>[...m,{role:'j',text:rt,actions:resp.actions,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true}]);
-      },600);
-      return;
-    }
-
-    // Otherwise: real Claude
     try{
+      setThinkingLabel('Thinking');
       const res=await fetch('/api/chat',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({message:q,context:liveData}),
+        body:JSON.stringify({
+          message:q,
+          context:liveData,
+          history:chatHistory,
+        }),
       });
       const data=await res.json();
       setThinking(false);
+
+      const mt=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+
       if(data.error){
-        setMessages(m=>[...m,{role:'j',text:`System error: ${data.error}`,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:false}]);
+        setMessages(m=>[...m,{role:'j',text:`**System error:** ${data.error}`,time:mt,typing:false}]);
         return;
       }
-      setMessages(m=>[...m,{role:'j',text:data.response,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:true,action:data.action}]);
-      if(data.action) executeAction(data.action, notify);
+
+      // Extract draft email if any
+      const draft=(data.actions||[]).find(a=>a.type==='draft_email');
+      const nonDraftActions=(data.actions||[]).filter(a=>a.type!=='draft_email');
+
+      setMessages(m=>[...m,{
+        role:'j',
+        text:data.response,
+        time:mt,
+        typing:true,
+        executed:data.executed,
+        draft,
+      }]);
+
+      // Execute client-side actions (open files, URLs, run commands)
+      if(nonDraftActions.length) executeClientActions(nonDraftActions, notify);
+
+      // Update history for context continuity
+      setChatHistory(h=>[...h,
+        {role:'user',content:q},
+        {role:'assistant',content:data.response||''},
+      ].slice(-20));
+
     }catch(e){
       setThinking(false);
-      setMessages(m=>[...m,{role:'j',text:`Connection error — ${e.message}`,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:false}]);
+      setMessages(m=>[...m,{role:'j',text:`**Connection error** — ${e.message}`,time:new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),typing:false}]);
     }
   };
 
@@ -680,19 +768,32 @@ function JarvisDesk({go, notify, liveData}){
               ):(
                 <div className="msg-jarvis">
                   <div className="msg-avatar-j">S</div>
-                  <div>
+                  <div style={{maxWidth:'75%'}}>
                     <div className="bubble-jarvis">
-                      {m.typing?<TypeWriter text={m.text}/>:<span dangerouslySetInnerHTML={{__html:m.text}}/>}
+                      {m.typing
+                        ?<TypeWriter text={m.text}/>
+                        :<span dangerouslySetInnerHTML={{__html:renderMarkdown(m.text)}}/>}
+                      {m.executed&&<ExecutedBadge items={m.executed}/>}
                       {m.actions&&m.actions.length>0&&(
-                        <div className="action-list">
-                          {m.actions.map(({ico,txt,done},ai)=>(
+                        <div className="action-list" style={{marginTop:8}}>
+                          {m.actions.map(({ico,txt,done:d},ai)=>(
                             <div key={ai} className="action-row">
                               <span className="aico">{ico}</span>
                               <span style={{fontSize:10,color:'var(--t2)',flex:1}}>{txt}</span>
-                              {done?<span className="adone">DONE</span>:<span className="apend">IN PROGRESS</span>}
+                              {d?<span className="adone">DONE</span>:<span className="apend">IN PROGRESS</span>}
                             </div>
                           ))}
                         </div>
+                      )}
+                      {m.draft&&(
+                        <DraftEmailCard
+                          draft={m.draft}
+                          onSend={(d)=>{
+                            const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+                            setMessages(prev=>[...prev,{role:'j',text:d.response||'Email sent.',time:t,typing:false,executed:d.executed}]);
+                          }}
+                          onDiscard={()=>setMessages(prev=>prev.map((x,xi)=>xi===i?{...x,draft:null}:x))}
+                        />
                       )}
                     </div>
                     <div className="msg-time msg-time-l">{m.time} · SECRETARY</div>
@@ -705,7 +806,10 @@ function JarvisDesk({go, notify, liveData}){
             <div className="msg-jarvis">
               <div className="msg-avatar-j">S</div>
               <div className="bubble-jarvis">
-                <div className="thinking"><div className="thdot"/><div className="thdot"/><div className="thdot"/></div>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div className="thinking"><div className="thdot"/><div className="thdot"/><div className="thdot"/></div>
+                  <span style={{fontSize:8.5,color:'var(--t3)',letterSpacing:'0.1em',textTransform:'uppercase'}}>{thinkingLabel}...</span>
+                </div>
               </div>
             </div>
           )}
@@ -725,8 +829,9 @@ function JarvisDesk({go, notify, liveData}){
               value={input}
               onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>e.key==='Enter'&&send()}
-              placeholder="Give me an order..."
+              placeholder="Give me an order, sir..."
               autoFocus
+              ref={inputRef}
             />
             <button className="btn bp" style={{padding:'6px 14px',fontSize:9}} onClick={()=>send()}>SEND</button>
           </div>
