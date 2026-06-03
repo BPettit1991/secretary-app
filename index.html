@@ -339,6 +339,24 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .am{font-size:8.5px;color:var(--t3);letter-spacing:0.04em}
 .amw{font-size:8.5px;color:var(--amber);letter-spacing:0.04em}
 
+/* ── SUGGESTIONS ── */
+.sg-shell{padding:22px 26px;height:100%;display:flex;flex-direction:column;overflow:hidden}
+.sg-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-content:start;padding-bottom:20px}
+.sg-grid::-webkit-scrollbar{width:3px}
+.sg-grid::-webkit-scrollbar-thumb{background:var(--b1)}
+.sg-card{background:var(--bg2);border:1px solid var(--b1);padding:16px;position:relative;overflow:hidden;transition:all 0.15s;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
+.sg-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--sg-col,rgba(0,212,255,0.3)),transparent)}
+.sg-card:hover{border-color:var(--b2);transform:translateY(-1px)}
+.sg-card.dismissed{opacity:0.25;pointer-events:none}
+.sg-card.approved{border-color:rgba(0,255,136,0.3);background:linear-gradient(135deg,rgba(0,255,136,0.04),var(--bg2))}
+.sg-type{font-size:7.5px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sg-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--t1);margin-bottom:6px;line-height:1.2}
+.sg-desc{font-size:9.5px;color:var(--t2);line-height:1.5;letter-spacing:0.02em;margin-bottom:12px}
+.sg-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sg-pill{font-size:7.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border:1px solid;clip-path:polygon(0 0,calc(100% - 3px) 0,100% 3px,100% 100%,3px 100%,0 calc(100% - 3px))}
+.sg-actions{display:flex;gap:6px}
+.sg-saving{font-size:8px;color:var(--green);letter-spacing:0.06em;margin-left:auto}
+
 /* ── TASKS ── */
 .tk-shell{padding:22px 26px;height:100%;display:flex;flex-direction:column;gap:0;overflow:hidden}
 .tk-header{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-shrink:0}
@@ -1269,6 +1287,133 @@ const AUTO_CATS=[
   ]},
 ];
 
+const SG_TYPE_META={
+  scheduled:{icon:'⏱',col:'var(--cyan)'},
+  trigger:{icon:'⚡',col:'var(--amber)'},
+  ai:{icon:'◈',col:'var(--purple)'},
+  sync:{icon:'↕',col:'var(--green)'},
+  cleanup:{icon:'◻',col:'var(--gold)'},
+};
+const SG_PRI_META={
+  high:{col:'var(--red)',bg:'var(--red2)',border:'rgba(255,59,48,0.3)'},
+  medium:{col:'var(--amber)',bg:'var(--amber2)',border:'rgba(255,149,0,0.3)'},
+  low:{col:'var(--t3)',bg:'var(--bg4)',border:'var(--b1)'},
+};
+const SG_EFFORT_META={
+  low:{label:'Quick win',col:'var(--green)'},
+  medium:{label:'Half day',col:'var(--amber)'},
+  high:{label:'Full build',col:'var(--red)'},
+};
+
+function Suggestions({liveData,go,notify}){
+  const [suggestions,setSuggestions]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [loaded,setLoaded]=useState(false);
+  const [statuses,setStatuses]=useState({}); // id -> 'approved'|'dismissed'
+
+  const load=async()=>{
+    setLoading(true);
+    try{
+      const r=await fetch('/api/suggestions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({context:liveData}),
+      });
+      const d=await r.json();
+      if(d.suggestions) setSuggestions(d.suggestions);
+      setLoaded(true);
+    }catch(e){
+      notify('Failed to load suggestions',e.message,'error');
+    }finally{setLoading(false);}
+  };
+
+  useEffect(()=>{load();},[]);
+
+  const approve=(id,title)=>{
+    setStatuses(s=>({...s,[id]:'approved'}));
+    notify('Automation approved',title,'success',3000);
+  };
+  const dismiss=(id)=>setStatuses(s=>({...s,[id]:'dismissed'}));
+  const buildIt=(sg)=>{
+    go('desk');
+    // Small delay then we'd ideally pre-fill the chat — for now navigate to desk
+    notify('Opening command desk','Describe this automation to JARVIS to build it','info',4000);
+  };
+
+  const visible=suggestions.filter(s=>statuses[s.id]!=='dismissed');
+  const approved=visible.filter(s=>statuses[s.id]==='approved');
+  const pending=visible.filter(s=>statuses[s.id]!=='approved');
+
+  return(
+    <div className="sg-shell">
+      <div style={{display:'flex',alignItems:'baseline',gap:12,marginBottom:18,flexShrink:0}}>
+        <div style={{fontFamily:'Rajdhani',fontSize:24,fontWeight:700,letterSpacing:'0.04em'}}>Automation Suggestions</div>
+        <div style={{fontSize:9,color:'var(--t3)',letterSpacing:'0.1em',textTransform:'uppercase',flex:1}}>
+          {loaded?`${pending.length} pending · ${approved.length} approved`:'AI-generated from your context'}
+        </div>
+        <button className="btn bp" style={{fontSize:8.5,padding:'6px 14px'}} onClick={load} disabled={loading}>
+          {loading?'Scanning...':'↻ Refresh'}
+        </button>
+      </div>
+
+      {loading&&!loaded&&(
+        <div style={{display:'flex',alignItems:'center',gap:12,padding:'40px 0',color:'var(--t3)',fontSize:9,letterSpacing:'0.12em',textTransform:'uppercase'}}>
+          <div className="thinking"><div className="thdot"/><div className="thdot"/><div className="thdot"/></div>
+          Analysing your calendar, tasks, and files for automation opportunities...
+        </div>
+      )}
+
+      {loaded&&suggestions.length===0&&(
+        <div style={{textAlign:'center',padding:'48px 0',fontSize:10,color:'var(--t3)',letterSpacing:'0.1em',textTransform:'uppercase'}}>
+          No suggestions generated — try refreshing
+        </div>
+      )}
+
+      <div className="sg-grid">
+        {pending.map(sg=>{
+          const tm=SG_TYPE_META[sg.type]||SG_TYPE_META.scheduled;
+          const pm=SG_PRI_META[sg.priority]||SG_PRI_META.medium;
+          const em=SG_EFFORT_META[sg.effort]||SG_EFFORT_META.medium;
+          return(
+            <div key={sg.id} className="sg-card" style={{'--sg-col':tm.col}}>
+              <div className="sg-type" style={{color:tm.col}}>
+                <span>{tm.icon}</span>{sg.type?.toUpperCase()||'AUTOMATION'}
+              </div>
+              <div className="sg-title">{sg.title}</div>
+              <div className="sg-desc">{sg.description}</div>
+              <div className="sg-meta">
+                <span className="sg-pill" style={{color:pm.col,background:pm.bg,borderColor:pm.border}}>{sg.priority}</span>
+                <span className="sg-pill" style={{color:em.col,background:'var(--bg4)',borderColor:'var(--b1)'}}>{em.label}</span>
+                <span className="sg-pill" style={{color:'var(--t3)',background:'var(--bg4)',borderColor:'var(--b1)'}}>{sg.category}</span>
+                {sg.saving&&<span className="sg-saving">↑ {sg.saving}</span>}
+              </div>
+              <div className="sg-actions">
+                <button className="btn bp" style={{fontSize:8,padding:'4px 11px'}} onClick={()=>{approve(sg.id,sg.title);buildIt(sg);}}>Build it</button>
+                <button className="bt btn" style={{fontSize:8,padding:'4px 9px'}} onClick={()=>approve(sg.id,sg.title)}>Approve</button>
+                <button className="bt btn" style={{fontSize:8,padding:'4px 9px',color:'var(--t3)'}} onClick={()=>dismiss(sg.id)}>Dismiss</button>
+              </div>
+            </div>
+          );
+        })}
+        {approved.length>0&&approved.map(sg=>{
+          const tm=SG_TYPE_META[sg.type]||SG_TYPE_META.scheduled;
+          return(
+            <div key={sg.id} className="sg-card approved" style={{'--sg-col':'var(--green)'}}>
+              <div className="sg-type" style={{color:'var(--green)'}}>✓ APPROVED</div>
+              <div className="sg-title">{sg.title}</div>
+              <div className="sg-desc" style={{color:'var(--t3)'}}>{sg.description}</div>
+              <div className="sg-actions">
+                <button className="bt btn" style={{fontSize:8,padding:'4px 9px'}} onClick={()=>buildIt(sg)}>Open in JARVIS</button>
+                <button className="bt btn" style={{fontSize:8,padding:'4px 9px',color:'var(--t3)'}} onClick={()=>dismiss(sg.id)}>Remove</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function Automations(){
   return(
     <div className="au-shell">
@@ -1344,6 +1489,73 @@ function mapListToCtx(listName){
   if(n.includes('rainbow')||n.includes('day job')||n.includes('work')||n.includes('dayjob')||n.includes('job'))return'd';
   // Rename your To-Do lists to "LATS", "Rainbow", "Real Life" for proper grouping
   return'p';
+}
+
+// ── NODE PANEL — live bridge status for all machines ──
+const NODE_DEFS = [
+  { id: 'MAIN-LAP',   bridge: 'local',   os: 'windows', icon: '⊞' },
+  { id: 'BLACKBETTY', bridge: 'proxy',   os: 'windows', icon: '⊞' },
+  { id: 'MAC-MINI',   bridge: 'proxy',   os: 'macos',   icon: '⌘' },
+  { id: 'TERTIARY',   bridge: 'proxy',   os: 'windows', icon: '⊞' },
+];
+
+function NodePanel(){
+  const [nodes,setNodes]=useState(()=>NODE_DEFS.map(n=>({...n,status:'checking',info:null})));
+
+  useEffect(()=>{
+    NODE_DEFS.forEach(async(def,i)=>{
+      try{
+        let data;
+        if(def.bridge==='local'){
+          const r=await fetch('http://localhost:7474/status',{signal:AbortSignal.timeout(2000)});
+          data=await r.json();
+        } else {
+          const r=await fetch('/api/bridge-proxy',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({machine:def.id,endpoint:'/status'}),
+            signal:AbortSignal.timeout(5000),
+          });
+          data=await r.json();
+        }
+        if(data.error) throw new Error(data.error);
+        const freeGb=Math.round((data.memory?.free||0)/1073741824);
+        const totalGb=Math.round((data.memory?.total||0)/1073741824);
+        const diskFree=data.disks?.[0]?.free;
+        const diskLow=diskFree&&diskFree<10*1073741824;
+        setNodes(n=>n.map((x,xi)=>xi===i?{...x,
+          status:diskLow?'warn':'online',
+          info:diskLow?'STORAGE LOW':'ONLINE',
+          detail:`${freeGb}/${totalGb}GB RAM`,
+        }:x));
+      }catch{
+        setNodes(n=>n.map((x,xi)=>xi===i?{...x,status:'offline',info:'OFFLINE'}:x));
+      }
+    });
+  },[]);
+
+  const statusStyle={
+    online:{dot:'don',col:'var(--green)'},
+    warn:{dot:'dwarn',col:'var(--amber)'},
+    offline:{dot:'doff',col:'var(--t3)'},
+    checking:{dot:'doff',col:'var(--t3)'},
+  };
+
+  return(
+    <div className="machines">
+      <div className="mlabel">// Connected Nodes</div>
+      {nodes.map(({id,os,icon,status,info,detail})=>{
+        const s=statusStyle[status]||statusStyle.offline;
+        return(
+          <div key={id} className="mrow" style={{opacity:status==='offline'?0.4:1}}>
+            <Dot c={s.dot}/>
+            <span style={{fontSize:9,color:'var(--t3)',marginRight:2}}>{icon}</span>
+            <span className="mname">{id}</span>
+            <span className="mst" style={{color:s.col,fontSize:8}}>{info||'—'}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function ConnectScreen({onConnected}){
@@ -1507,6 +1719,7 @@ function App(){
     inbox:<Inbox go={setV}/>,
     filemap:<FileMap storage={storage}/>,
     automations:<Automations/>,
+    suggestions:<Suggestions liveData={data} go={setV} notify={notify}/>,
     tasks:<Tasks notify={notify} liveTasks={liveTasks} loading={loading}/>,
   };
 
@@ -1527,7 +1740,7 @@ function App(){
           </div>
           <div className="brand-text">
             <div className="bname">Secretary</div>
-            <div className="bsub">blackbetty · sys v2.1</div>
+            <div className="bsub">butler · sys v3.0</div>
           </div>
         </div>
         <div className="bstatus"><div className="bpulse"/><Clock/>&nbsp;·&nbsp;SYSTEMS ONLINE</div>
@@ -1537,6 +1750,7 @@ function App(){
             {id:'desk',ic:'⊞',lb:'Command Desk'},
             {id:'inbox',ic:'⬡',lb:'Inbox',n:7},
             {id:'tasks',ic:'◧',lb:'Tasks',nr:taskCount},
+            {id:'suggestions',ic:'◆',lb:'Suggestions'},
             {id:'filemap',ic:'◉',lb:'File Map'},
             {id:'automations',ic:'⚙',lb:'Automations'},
           ].map(({id,ic,lb,n,nr})=>(
@@ -1547,16 +1761,7 @@ function App(){
             </button>
           ))}
         </nav>
-        <div className="machines">
-          <div className="mlabel">// Connected Nodes</div>
-          {[
-            {c:'don',n:'MAIN-LAP',st:'ONLINE',sc:'var(--green)'},
-            {c:'dwarn',n:'BLACKBETTY',st:'STORAGE LOW',sc:'var(--amber)'},
-            {c:'doff',n:'TERTIARY',st:'OFFLINE',sc:'var(--t3)',dim:true},
-          ].map(({c,n,st,sc,dim})=>(
-            <div key={n} className="mrow"><Dot c={c}/><span className="mname" style={dim?{color:'var(--t3)'}:{}}>{n}</span><span className="mst" style={{color:sc}}>{st}</span></div>
-          ))}
-        </div>
+        <NodePanel/>
       </aside>
       <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
         <div className="ticker">
