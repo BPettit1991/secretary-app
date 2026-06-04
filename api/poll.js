@@ -1,3 +1,5 @@
+import { saveToken } from './token-store.js';
+
 // Polls Microsoft for token after user has entered device code
 export default async function handler(req, res) {
   const { MS_CLIENT_ID, MS_TENANT_ID } = process.env;
@@ -23,8 +25,10 @@ export default async function handler(req, res) {
   const data = await r.json();
 
   if (data.refresh_token) {
-    // Auth complete — set cookie and signal success
-    // Omit Secure flag when running over HTTP (self-hosted LAN)
+    // Save server-side so all devices share this login
+    saveToken(data.refresh_token);
+
+    // Also set cookie for this browser session
     const isHttps = (req.headers['x-forwarded-proto'] === 'https') || (req.connection?.encrypted);
     const cookieVal = encodeURIComponent(data.refresh_token);
     const secure = isHttps ? '; Secure' : '';

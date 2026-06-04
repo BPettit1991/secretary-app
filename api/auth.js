@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'crypto';
+import { getStoredToken } from './token-store.js';
 
 export function generatePKCE() {
   const verifier = randomBytes(32).toString('base64url');
@@ -21,8 +22,9 @@ export async function getAccessToken(req) {
 
   if (!MS_CLIENT_ID) throw new Error('NOT_CONFIGURED');
 
+  // Try cookie first (browser-specific), then fall back to server-side stored token
   const cookies = parseCookies(req);
-  const refreshToken = cookies.ms_rt;
+  const refreshToken = cookies.ms_rt || getStoredToken();
 
   if (!refreshToken) throw new Error('NOT_CONNECTED');
 
