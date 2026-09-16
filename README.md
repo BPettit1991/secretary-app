@@ -1,73 +1,21 @@
-# React + TypeScript + Vite
+# secretary-app
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**What it is:** A single-file, JARVIS-style HUD dashboard prototype — a "secretary" command centre with a cyberpunk interface (task tree/graph views, quick commands, live ticker). Named SECRETARY // J.A.R.V.I.S.
+**Status:** ⚪ Prototype (front-end only, no backend) · **Owner:** Benja · **Primary machine:** BLACKBETTY · **Visibility:** Public
 
-Currently, two official plugins are available:
+## What it does
+A self-contained React app (React + Babel loaded from CDN, everything else inline in `index.html`) rendering a HUD-style dashboard: TREE VIEW / GRAPH VIEW of tasks, ACTIVE / IN PROGRESS states, QUICK CMDS, and a scrolling status ticker. It's a UI concept — no live data, no API calls (only Google Fonts + unpkg for React).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## How to use / run
+Open `index.html` in a browser — that's it. No build step, no server, no dependencies to install.
 
-## React Compiler
+## Project tracking
+### Done
+- [x] Full HUD UI (tree/graph views, panels, ticker, theming)
+### To do / backlog
+- [ ] Decide: is this the front-end for a real assistant, or a design reference? (overlaps with the `phone` idea)
+- [ ] If real: wire to actual task data
+- [ ] It's public — confirm that's intended, or flip to private
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Changelog
+- 2026-09-15 — README added during GitHub reorg (BLACKBETTY)
