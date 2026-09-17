@@ -50,9 +50,14 @@ export async function getAccessToken(req) {
   const data = await res.json();
   if (!data.access_token) {
     const msg = data.error_description?.split('\r\n')[0] || data.error || 'unknown';
-    // If refresh token is stale, signal re-auth
     if (data.error === 'invalid_grant') throw new Error('NOT_CONNECTED');
     throw new Error(`Token error: ${msg}`);
+  }
+
+  // Auto-save the refreshed token server-side on every successful auth
+  // This means whichever device is logged in will share its token with all others
+  if (data.refresh_token) {
+    try { const { saveToken } = await import('./token-store.js'); saveToken(data.refresh_token); } catch {}
   }
 
   return { accessToken: data.access_token, newRefreshToken: data.refresh_token };
