@@ -1,5 +1,7 @@
+import { requireAuth } from './_session.js';
 // Initiates device code flow — no redirect URI needed in Azure
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   const { MS_CLIENT_ID, MS_TENANT_ID } = process.env;
 
   if (!MS_CLIENT_ID) {

@@ -30,7 +30,7 @@ function vercelHandler(handler) {
 }
 
 // Dynamically load API modules
-const apis = ['data', 'chat', 'setup', 'poll', 'suggestions', 'bridge-proxy'];
+const apis = ['login', 'data', 'chat', 'setup', 'poll', 'suggestions', 'bridge-proxy'];
 for (const name of apis) {
   try {
     const mod = await import(`./api/${name}.js`);

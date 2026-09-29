@@ -7,6 +7,66 @@
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script>
+// App login: on any 401 from /api/*, ask for the password once, then retry.
+(function () {
+  const origFetch = window.fetch.bind(window);
+  let pending = null;
+
+  function askPassword(message) {
+    return new Promise(resolve => {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);font-family:Share Tech Mono,monospace';
+      wrap.innerHTML =
+        '<form style="background:#050d14;border:1px solid #00d4ff;padding:24px;min-width:280px;color:#00d4ff">' +
+        '<div style="margin-bottom:12px;letter-spacing:2px">SECRETARY // LOGIN</div>' +
+        '<input type="password" autocomplete="current-password" style="width:100%;padding:8px;background:#000;color:#00d4ff;border:1px solid #00d4ff" />' +
+        '<div data-msg style="color:#ff4d4d;margin-top:8px;min-height:1em;font-size:12px"></div>' +
+        '<button type="submit" style="margin-top:12px;width:100%;padding:8px;background:#00d4ff;color:#000;border:0;cursor:pointer">UNLOCK</button>' +
+        '</form>';
+      wrap.querySelector('[data-msg]').textContent = message || '';
+      const form = wrap.querySelector('form');
+      const input = wrap.querySelector('input');
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        wrap.remove();
+        resolve(input.value);
+      });
+      document.body.appendChild(wrap);
+      input.focus();
+    });
+  }
+
+  async function login() {
+    let message = '';
+    for (;;) {
+      const password = await askPassword(message);
+      const r = await origFetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (r.ok) return;
+      message = r.status === 503 ? 'Server auth not configured (APP_PASSWORD).' : 'Wrong password.';
+    }
+  }
+
+  window.fetch = async function (input, init) {
+    const res = await origFetch(input, init);
+    const url = typeof input === 'string' ? input : input.url;
+    const path = new URL(url, location.href);
+    // Only app-auth 401s; /api/data also returns 401 when Microsoft is not connected.
+    if (res.status === 401 && path.origin === location.origin &&
+        path.pathname.startsWith('/api/') && path.pathname !== '/api/login' &&
+        (await res.clone().json().catch(() => ({}))).error === 'UNAUTHORIZED') {
+      pending = pending || login().finally(() => { pending = null; });
+      await pending;
+      return origFetch(input, init);
+    }
+    return res;
+  };
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}

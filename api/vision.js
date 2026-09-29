@@ -4,6 +4,7 @@
  * Returns Claude's analysis with full butler context
  */
 import { getAccessToken } from './auth.js';
+import { requireAuth } from './_session.js';
 
 const VISION_SYSTEM = `You are SECRETARY — Benja's AI butler. You have just been shown an image.
 Analyse it with precision. Be specific about what you see. If it's a document, extract the key information.
@@ -12,6 +13,7 @@ If it's a file or UI, identify what it is and what should be done with it.
 Lead with the most important observation. Be concise but complete.`;
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   if (req.method !== 'POST') return res.status(405).end();
 
   const { image, mediaType = 'image/png', prompt = 'What do you see? Surface anything actionable.', context } = req.body || {};
