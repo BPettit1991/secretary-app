@@ -7,6 +7,8 @@
  * Body: { machine: "MAC-MINI", endpoint: "/status", method: "GET", body: {} }
  */
 
+import { requireAuth } from './_session.js';
+
 const MACHINES = {
   'MAIN-LAP': process.env.BRIDGE_MAINLAP || null,    // Optional — usually reached via localhost
   'BLACKBETTY': process.env.BRIDGE_BLACKBETTY || null,
@@ -15,6 +17,7 @@ const MACHINES = {
 };
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   if (req.method !== 'POST') return res.status(405).end();
 
   const { machine, endpoint = '/status', method = 'GET', body } = req.body || {};

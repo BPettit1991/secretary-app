@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth.js';
+import { requireAuth } from './_session.js';
 
 async function getCalendarEvents(token) {
   const now = new Date();
@@ -68,6 +69,7 @@ async function getStorage(token) {
 }
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
 

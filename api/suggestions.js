@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth.js';
+import { requireAuth } from './_session.js';
 
 const PROMPT = `You are generating automation suggestions for Benja's personal secretary system.
 Analyse his context and generate exactly 8 specific, actionable automation ideas.
@@ -27,6 +28,7 @@ Types:
 Base suggestions on the context provided. Make them specific to his actual calendar items, task names, and file structure — not generic.`;
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   if (req.method !== 'POST') return res.status(405).end();
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

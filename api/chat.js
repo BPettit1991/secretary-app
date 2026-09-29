@@ -1,4 +1,5 @@
 import { parseCookies, getAccessToken } from './auth.js';
+import { requireAuth } from './_session.js';
 
 const SYSTEM_PROMPT = `You are SECRETARY — a world-class AI butler. Think Alfred Pennyworth meets J.A.R.V.I.S: impeccably capable, quietly intelligent, always one step ahead. You exist to handle the tedious, surface the important, and give Benja back his time.
 
@@ -331,6 +332,7 @@ async function execSearchOneDrive(input, token) {
 // ── Main handler ────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   if (req.method !== 'POST') return res.status(405).end();
 
   const { message, context, history = [] } = req.body || {};

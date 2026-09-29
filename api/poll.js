@@ -1,7 +1,9 @@
 import { saveToken } from './token-store.js';
+import { requireAuth } from './_session.js';
 
 // Polls Microsoft for token after user has entered device code
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   const { MS_CLIENT_ID, MS_TENANT_ID } = process.env;
   const { device_code } = req.body || {};
 
